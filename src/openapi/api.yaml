@@ -1,0 +1,1157 @@
+openapi: 3.0.3
+info:
+  title: E-Commerce API
+  version: 1.0.0
+  description: |
+    Starter OpenAPI spec for Angular client generation (auth, products, cart).
+servers:
+  - url: http://217.77.8.234:9600/api
+    description: Local development server
+tags:
+  - name: Auth
+  - name: Products
+  - name: Cart
+  - name: Panier
+  - name: Produit
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Logout current user (invalidate token)
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Logged out
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/verifyOtp:
+    post:
+      tags:
+        - Auth
+      summary: Verify OTP code
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOtpRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseBoolean'
+
+  /auth/verifyEmail:
+    post:
+      tags:
+        - Auth
+      summary: Verify email with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyEmailRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseString'
+
+  /auth/sendTokenVerifyEmail:
+    post:
+      tags:
+        - Auth
+      summary: Send verification email token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendTokenVerifyEmailRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseString'
+
+  /auth/sendTokenResetPassword:
+    post:
+      tags:
+        - Auth
+      summary: Send reset password token
+      parameters:
+        - in: query
+          name: userEmail
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseString'
+
+  /auth/resetPassword:
+    post:
+      tags:
+        - Auth
+      summary: Reset password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseString'
+
+  /auth/resendOtp:
+    post:
+      tags:
+        - Auth
+      summary: Resend OTP for login
+      parameters:
+        - in: query
+          name: login
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseString'
+
+  /auth/createSuperAdmin:
+    post:
+      tags:
+        - Auth
+      summary: Endpoint to create a super admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSuperAdminRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseString'
+
+  /products:
+    get:
+      tags:
+        - Products
+      summary: List products
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Page number
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Page size
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: Sort expression
+        - in: query
+          name: category
+          schema:
+            type: string
+          description: Filter by category
+        - in: query
+          name: q
+          schema:
+            type: string
+          description: Search query
+      responses:
+        '200':
+          description: Product page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPage'
+  /products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get product by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /products/search:
+    get:
+      tags:
+        - Products
+      summary: Search products
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPage'
+  /cart:
+    get:
+      tags:
+        - Cart
+      summary: Get current user's cart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Cart
+      summary: Clear cart
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Cart cleared
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cart/items:
+    post:
+      tags:
+        - Cart
+      summary: Add item to cart
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddToCartRequest'
+      responses:
+        '201':
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cart/items/{itemId}:
+    patch:
+      tags:
+        - Cart
+      summary: Update item quantity
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: itemId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCartItemRequest'
+      responses:
+        '200':
+          description: Cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Cart
+      summary: Remove item from cart
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: itemId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cart/checkout:
+    post:
+      tags:
+        - Cart
+      summary: Checkout the cart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Checkout result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /panier/create:
+    post:
+      tags:
+        - Panier
+      summary: Method that create a cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PanierCreateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePanier'
+
+  /panier/add-product:
+    post:
+      tags:
+        - Panier
+      summary: Method that add product to cart
+      parameters:
+        - in: query
+          name: panierCode
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: produitCode
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: quantite
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePanier'
+
+  /panier/by-client:
+    get:
+      tags:
+        - Panier
+      summary: Method that get cart by client code
+      parameters:
+        - in: query
+          name: clientCode
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePanier'
+
+  /panier/remove-product:
+    delete:
+      tags:
+        - Panier
+      summary: Method that remove product from cart
+      parameters:
+        - in: query
+          name: panierCode
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: produitCode
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePanier'
+
+  /panier/clear:
+    delete:
+      tags:
+        - Panier
+      summary: Method that clear cart
+      parameters:
+        - in: query
+          name: panierCode
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePanier'
+
+  /produit/update:
+    put:
+      tags:
+        - Produit
+      summary: Method that update a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProduitRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduit'
+
+  /produit/create:
+    post:
+      tags:
+        - Produit
+      summary: Method that create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProduitRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduit'
+
+  /produit/get:
+    get:
+      tags:
+        - Produit
+      summary: Method that get a product by code
+      parameters:
+        - in: query
+          name: produitCode
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduit'
+
+  /produit/by-category:
+    get:
+      tags:
+        - Produit
+      summary: Method that get products by category
+      parameters:
+        - in: query
+          name: categorie
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduitList'
+
+  /produit/all:
+    get:
+      tags:
+        - Produit
+      summary: Method that get all products
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduitList'
+
+  /produit/delete:
+    delete:
+      tags:
+        - Produit
+      summary: Method that delete a product
+      parameters:
+        - in: query
+          name: produitCode
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduit'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - email
+        - name
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+      required:
+        - email
+        - password
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        expiresIn:
+          type: integer
+          description: Seconds until expiration
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+        - accessToken
+        - user
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 6
+        name:
+          type: string
+      required:
+        - email
+        - password
+        - name
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - message
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+          example: USD
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+        category:
+          type: string
+        stock:
+          type: integer
+        rating:
+          type: number
+          format: float
+      required:
+        - id
+        - name
+        - price
+        - currency
+    ProductPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+      required:
+        - items
+        - total
+        - page
+        - pageSize
+    CartItem:
+      type: object
+      properties:
+        itemId:
+          type: string
+        product:
+          $ref: '#/components/schemas/Product'
+        quantity:
+          type: integer
+          minimum: 1
+        subtotal:
+          type: number
+          format: float
+      required:
+        - itemId
+        - product
+        - quantity
+    Cart:
+      type: object
+      properties:
+        id:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        total:
+          type: number
+          format: float
+        currency:
+          type: string
+      required:
+        - id
+        - items
+        - total
+    AddToCartRequest:
+      type: object
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+      required:
+        - productId
+        - quantity
+    UpdateCartItemRequest:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+      required:
+        - quantity
+    CheckoutResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+        total:
+          type: number
+          format: float
+        currency:
+          type: string
+        status:
+          type: string
+          example: paid
+      required:
+        - orderId
+        - total
+        - currency
+        - status
+    PanierProduct:
+      type: object
+      properties:
+        produitCode:
+          type: string
+        nom:
+          type: string
+        description:
+          type: string
+        prix:
+          type: number
+          format: float
+        stock:
+          type: integer
+          format: int32
+        categorie:
+          type: string
+        state:
+          type: string
+      required:
+        - produitCode
+        - nom
+        - prix
+    Panier:
+      type: object
+      properties:
+        panierCode:
+          type: string
+        dateCreation:
+          type: string
+          format: date-time
+        clientCode:
+          type: string
+        produits:
+          type: array
+          items:
+            $ref: '#/components/schemas/PanierProduct'
+        state:
+          type: string
+      required:
+        - panierCode
+        - clientCode
+        - produits
+        - state
+    ApiResponsePanier:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          $ref: '#/components/schemas/Panier'
+        code:
+          type: integer
+          format: int32
+        status:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - timestamp
+        - data
+        - code
+        - status
+    PanierCreateRequest:
+      type: object
+      properties:
+        panierCode:
+          type: string
+        clientCode:
+          type: string
+        state:
+          type: string
+      required:
+        - panierCode
+        - clientCode
+        - state
+
+    Produit:
+      type: object
+      properties:
+        produitCode:
+          type: string
+        nom:
+          type: string
+        description:
+          type: string
+        prix:
+          type: number
+          format: float
+        stock:
+          type: integer
+          format: int32
+        categorie:
+          type: string
+        state:
+          type: string
+      required:
+        - produitCode
+        - nom
+        - prix
+
+    ProduitRequest:
+      type: object
+      properties:
+        produitCode:
+          type: string
+        nom:
+          type: string
+        description:
+          type: string
+        prix:
+          type: number
+          format: float
+        stock:
+          type: integer
+          format: int32
+        categorie:
+          type: string
+        state:
+          type: string
+      required:
+        - produitCode
+        - nom
+        - prix
+
+    ApiResponseProduit:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          $ref: '#/components/schemas/Produit'
+        code:
+          type: integer
+          format: int32
+        status:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - timestamp
+        - data
+        - code
+        - status
+
+    ApiResponseProduitList:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Produit'
+        code:
+          type: integer
+          format: int32
+        status:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - timestamp
+        - data
+        - code
+        - status
+
+    ApiResponseBoolean:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: boolean
+        code:
+          type: integer
+          format: int32
+        status:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - timestamp
+        - data
+        - code
+        - status
+
+    ApiResponseString:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: string
+        code:
+          type: integer
+          format: int32
+        status:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - timestamp
+        - data
+        - code
+        - status
+
+    VerifyOtpRequest:
+      type: object
+      properties:
+        otpCode:
+          type: string
+      required:
+        - otpCode
+
+    VerifyEmailRequest:
+      type: object
+      properties:
+        token:
+          type: string
+      required:
+        - token
+
+    SendTokenVerifyEmailRequest:
+      type: object
+      properties:
+        userEmail:
+          type: string
+      required:
+        - userEmail
+
+    ResetPasswordRequest:
+      type: object
+      properties:
+        token:
+          type: string
+        password:
+          type: string
+          format: password
+      required:
+        - token
+        - password
+
+    CreateSuperAdminRequest:
+      type: object
+      properties:
+        userCode:
+          type: string
+        userNames:
+          type: string
+        userPhoneNumber:
+          type: string
+        userPassword:
+          type: string
+          format: password
+        userState:
+          type: string
+        roles:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        token:
+          type: string
+        userEmail:
+          type: string
+          format: email
+        preferredCurrency:
+          type: string
+        addresses:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        image:
+          type: string
+          format: uri
+        theme:
+          type: string
