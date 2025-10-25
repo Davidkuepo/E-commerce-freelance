@@ -17,9 +17,9 @@ import { MatIcon } from '@angular/material/icon';
 
       <div class="relative group">
         <input
-          class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-800
+          class="block w-full h-12 rounded-lg border border-gray-300 bg-white px-4 text-gray-800
                  placeholder:text-gray-400 shadow-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500
-                 focus:ring-offset-1 transition-all duration-200 outline-none disabled:opacity-60"
+                 focus:ring-offset-1 transition-all duration-200 outline-none disabled:opacity-60 text-sm sm:text-base"
           [type]="type"
           [placeholder]="placeholder"
           [disabled]="disabled"
@@ -111,9 +111,9 @@ export class EmailInputWrapper {
       </label>
 
       <textarea
-        class="block w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-800
+        class="block w-full resize-none rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800
                placeholder:text-gray-400 shadow-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500
-               focus:ring-offset-1 transition-all duration-200 outline-none disabled:opacity-60"
+               focus:ring-offset-1 transition-all duration-200 outline-none disabled:opacity-60 text-sm sm:text-base"
         [rows]="rows"
         [placeholder]="placeholder"
         [disabled]="disabled"
@@ -155,15 +155,15 @@ export class TextAreaWrapper {
   standalone: true,
   imports: [CommonModule, MatIcon],
   template: `
-    <label class="flex items-center gap-3 cursor-pointer select-none">
+    <label class="flex items-center gap-2 sm:gap-3 cursor-pointer select-none">
       <input
         type="checkbox"
-        class="h-5 w-5 accent-cyan-600 border-gray-300 rounded focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1"
+        class="h-5 w-5 shrink-0 accent-cyan-600 border-gray-300 rounded focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1"
         [checked]="checked"
         [disabled]="disabled"
         (change)="onChange($event)"
       />
-      <span class="text-gray-700">{{ label }}</span>
+      <span class="text-gray-700 text-sm sm:text-base">{{ label }}</span>
     </label>
 
     <p *ngIf="hint && !error" class="text-xs text-gray-500 mt-1">{{ hint }}</p>
@@ -196,7 +196,7 @@ export class CheckboxWrapper {
   imports: [CommonModule, MatIcon],
   template: `
     <button
-      class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all
+      class="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-lg font-medium text-sm sm:text-base transition-all
              focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
       [ngClass]="colorClass()"
       [type]="type"

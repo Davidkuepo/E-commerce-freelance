@@ -88,6 +88,7 @@ import { CartService } from '../../api/api/cart.service';
                   <a
                     routerLink="/profile"
                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    (click)="closeUserMenu()"
                     >Profile</a
                   >
                 </li>
@@ -95,6 +96,7 @@ import { CartService } from '../../api/api/cart.service';
                   <a
                     routerLink="/cart"
                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    (click)="closeUserMenu()"
                     >Panier</a
                   >
                 </li>
@@ -219,6 +221,10 @@ export class AppHeader {
     this.userMenuOpen.update((v: boolean) => !v);
   }
 
+  closeUserMenu(): void {
+    this.userMenuOpen.set(false);
+  }
+
   getAvatar(user: any): string | null {
     return user?.image || user?.avatar || null;
   }
@@ -256,6 +262,7 @@ export class AppHeader {
 
   logout() {
     this.store.dispatch(AuthActions.logout());
+    this.closeUserMenu();
   }
 }
 

@@ -23,11 +23,11 @@ import { map } from 'rxjs';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="container mx-auto py-8">
+    <section class="mx-auto max-w-screen-lg px-4 py-6 sm:py-8">
       <div
-        class="flex flex-col md:flex-row h-[700px] w-full rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-lg"
+        class="flex flex-col md:flex-row w-full md:min-h-[560px] rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-lg"
       >
-        <div class="relative w-full md:w-1/2 h-64 md:h-auto block bg-gray-100">
+        <div class="relative w-full md:w-1/2 h-48 sm:h-64 md:h-auto block bg-gray-100">
           <img
             loading="eager"
             class="h-full w-full object-cover"
@@ -36,12 +36,12 @@ import { map } from 'rxjs';
           />
         </div>
 
-        <div class="w-full flex flex-col items-center justify-start px-4 pt-16 md:pt-24">
+        <div class="w-full flex flex-col items-center justify-center px-4 py-8 md:py-12">
           <form
-            class="md:w-96 w-80 flex flex-col items-center justify-center"
+            class="w-full max-w-sm sm:max-w-md md:max-w-lg flex flex-col items-center justify-center"
             (submit)="onSubmit($event)"
           >
-            <h2 class="text-4xl text-gray-900 font-medium">Sign in</h2>
+            <h2 class="text-2xl sm:text-3xl md:text-4xl text-gray-900 font-medium">Sign in</h2>
             <p class="text-sm text-gray-500/90 mt-3">Welcome back! Please sign in to continue</p>
 
             <button
@@ -49,24 +49,29 @@ import { map } from 'rxjs';
               class="w-full mt-8 bg-gray-500/10 flex items-center justify-center h-12 rounded-full"
             >
               <img
+                class="h-5"
                 src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/login/googleLogo.svg"
                 alt="googleLogo"
               />
             </button>
 
-            <div class="flex items-center gap-4 w-full my-5">
-              <div class="w-full h-px bg-gray-300/90"></div>
-              <p class="w-full text-nowrap text-sm text-gray-500/90">or sign in with email</p>
-              <div class="w-full h-px bg-gray-300/90"></div>
+            <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 w-full my-5">
+              <div class="h-px bg-gray-300/90"></div>
+              <p class="text-center text-xs sm:text-sm text-gray-500/90 px-1">
+                or sign in with email
+              </p>
+              <div class="h-px bg-gray-300/90"></div>
             </div>
 
             <!-- Email (custom wrapper shows error) -->
-            <app-email-input
-              label="Email"
-              [value]="email()"
-              (valueChange)="email.set($event)"
-              [error]="(error$ | async) || null"
-            ></app-email-input>
+            <div class="w-full">
+              <app-email-input
+                label="Email"
+                [value]="email()"
+                (valueChange)="email.set($event)"
+                [error]="(error$ | async) || null"
+              ></app-email-input>
+            </div>
 
             <!-- Password (custom wrapper shows error) -->
             <div class="w-full mt-4">
@@ -80,7 +85,9 @@ import { map } from 'rxjs';
               ></app-text-input>
             </div>
 
-            <div class="w-full flex items-center justify-between mt-4 text-gray-500/80">
+            <div
+              class="w-full flex items-center justify-between gap-2 flex-wrap mt-4 text-gray-500/80"
+            >
               <div class="flex items-center gap-2">
                 <input
                   class="h-5"
