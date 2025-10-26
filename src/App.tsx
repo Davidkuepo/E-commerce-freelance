@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import Pages from "@/pages";
 import { SessionProvider } from "@/context/useSession/SessionProvider";
+import { Toaster } from "react-hot-toast";
 
 const queryClient = new QueryClient();
 
@@ -12,6 +13,7 @@ export default function App() {
       <BrowserRouter>
         <SessionProvider>
           <Pages />
+          <Toaster />
         </SessionProvider>
       </BrowserRouter>
     </QueryClientProvider>

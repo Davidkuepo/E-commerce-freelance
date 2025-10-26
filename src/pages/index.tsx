@@ -1,7 +1,9 @@
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router";
 
-import Home from "@/pages/Home";
+import Landing from "@/pages/Landing";
+import PageLoadingIndicator from "@/components/PageLoadingIndicator";
+import AppLayout from "./layout";
 
 const Login = lazy(() => import("@/pages/auth/Login"));
 const Register = lazy(() => import("@/pages/auth/Register"));
@@ -15,21 +17,23 @@ const ProductDetails = lazy(() => import("@/pages/products/Details"));
 
 export default function Index() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<PageLoadingIndicator />}>
       <Routes>
-        <Route index element={<Home />} />
+        <Route element={<AppLayout />}>
+          <Route index element={<Landing />} />
+
+          <Route path="product">
+            <Route index element={<ProductList />} />
+            <Route path=":productId/details" element={<ProductDetails />} />
+            <Route path=":productId/edit" element={<EditProduct />} />
+            <Route path="new" element={<CreateProduct />} />
+          </Route>
+
+          <Route path="cart" element={<Cart />} />
+        </Route>
 
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
-
-        <Route path="product">
-          <Route index element={<ProductList />} />
-          <Route path=":productId/details" element={<ProductDetails />} />
-          <Route path=":productId/edit" element={<EditProduct />} />
-          <Route path="new" element={<CreateProduct />} />
-        </Route>
-
-        <Route path="cart" element={<Cart />} />
       </Routes>
     </Suspense>
   );
