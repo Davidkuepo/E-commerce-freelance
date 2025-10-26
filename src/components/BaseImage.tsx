@@ -9,6 +9,7 @@ export default function BaseImage({ source, alt, className }: Props) {
     <div className={`overflow-hidden bg-gray-200 ${className ?? ""}`}>
       <img
         src={source}
+        loading="lazy"
         alt={alt ?? "image"}
         className="size-full object-cover"
       />
