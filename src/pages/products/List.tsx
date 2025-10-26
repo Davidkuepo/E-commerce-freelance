@@ -1,3 +1,139 @@
 export default function ProductList() {
-  return <div></div>;
+  return (
+        <section className="container mx-auto py-6 space-y-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold">Tous les produits</h2>
+        <div className="flex items-center gap-2">
+          <div className="w-64">
+            <app-text-input
+              label="Rechercher"
+              [placeholder]="'Rechercher...'"
+              [value]="query()"
+              (valueChange)="query.set($event)"
+            ></app-text-input>
+          </div>
+          <app-button color="primary" (clicked)="search()">Rechercher</app-button>
+
+          <!-- View toggle icons -->
+          <div
+            className="ml-2 hidden sm:flex items-center gap-1 border border-gray-200 rounded-lg bg-white px-1"
+          >
+            <button
+              className="p-2 rounded-md"
+              [class.bg-gray-200]="viewMode() === 'card'"
+              title="Vue Carte"
+              (click)="toggleView('card')"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z" />
+              </svg>
+            </button>
+            <button
+              className="p-2 rounded-md"
+              [class.bg-gray-200]="viewMode() === 'list'"
+              title="Vue Liste"
+              (click)="toggleView('list')"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M3 5h18v2H3zm0 6h18v2H3zm0 6h18v2H3z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="font-semibold">Filtres</div>
+          <div className="flex items-center gap-2">
+            <button
+              className="px-3 py-1 rounded-md border border-gray-200 hover:bg-gray-50"
+              (click)="resetFilters()"
+            >
+              Réinitialiser
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <app-text-input
+              label="Prix min"
+              [type]="'number'"
+              [value]="minPrice() + ''"
+              (valueChange)="minPrice.set(+$event || 0)"
+            ></app-text-input>
+          </div>
+          <div>
+            <app-text-input
+              label="Prix max"
+              [type]="'number'"
+              [value]="maxPrice() + ''"
+              (valueChange)="maxPrice.set(+$event || 0)"
+            ></app-text-input>
+          </div>
+          <div>
+            <app-text-input
+              label="Note minimale"
+              [type]="'number'"
+              [hint]="'Entrez une valeur entre 0 et 5'"
+              [value]="minRating() + ''"
+              (valueChange)="minRating.set(+$event || 0)"
+            ></app-text-input>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">Etat</label>
+            <select
+              className="w-full rounded-md border border-gray-200 px-3 py-2"
+              [value]="stateFilter()"
+              (change)="onStateChange($event)"
+            >
+              <option value="all">Tous</option>
+              <option *ngFor="let s of states()" [value]="s">{{ s }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-center gap-3">
+          <app-checkbox
+            label="En stock seulement"
+            [checked]="inStockOnly()"
+            (checkedChange)="inStockOnly.set($event)"
+          ></app-checkbox>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-center" *ngIf="loading()">
+        <span className="loading loading-spinner loading-md text-primary"></span>
+      </div>
+
+      <ng-container *ngIf="!loading()">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          *ngIf="viewMode() === 'list'; else cardGridProducts"
+        >
+          <app-product-list-item
+            *ngFor="let p of filteredProducts()"
+            [product]="p"
+            (addToCart)="addToCart($event)"
+          />
+        </div>
+        <ng-template #cardGridProducts>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <app-product-cart-item
+              *ngFor="let p of filteredProducts()"
+              [product]="p"
+              (addToCart)="addToCart($event)"
+            />
+          </div>
+        </ng-template>
+      </ng-container>
+
+      <div className="text-center text-gray-500" *ngIf="!loading() && filteredProducts().length === 0">
+        Aucun produit trouvé.
+      </div>
+    </section>
+
+  );
 }
