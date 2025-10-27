@@ -16,4 +16,5 @@ export interface ProduitRequest {
   stock?: number;
   categorie?: string;
   state?: string;
+  image?: string;
 }

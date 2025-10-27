@@ -37,7 +37,7 @@ import { CartService } from '../../api/api/cart.service';
   ],
   template: `
     <nav class="bg-white border-gray-200">
-      <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+      <div class="container mx-auto px-4 flex flex-wrap items-center justify-between h-16">
         <!-- Brand -->
         <a routerLink="/" class="flex items-center space-x-3 rtl:space-x-reverse">
           <mat-icon color="primary">storefront</mat-icon>
@@ -46,7 +46,7 @@ import { CartService } from '../../api/api/cart.service';
 
         <!-- Right zone: user + burger -->
         <div class="flex items-center md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
-          <div class="relative">
+          <div class="relative" *ngIf="user$ | async as user; else guestActions">
             <!-- User avatar button -->
             <button
               type="button"
@@ -56,16 +56,16 @@ import { CartService } from '../../api/api/cart.service';
             >
               <span class="sr-only">Open user menu</span>
               <img
-                *ngIf="getAvatar((user$ | async)!)"
-                [src]="getAvatar((user$ | async)!)"
+                *ngIf="getAvatar(user)"
+                [src]="getAvatar(user)"
                 class="w-8 h-8 rounded-full"
                 alt="user photo"
               />
               <span
-                *ngIf="!getAvatar((user$ | async)!)"
+                *ngIf="!getAvatar(user)"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-cyan-600 text-white"
               >
-                {{ (user$ | async)?.name?.[0] || (user$ | async)?.email?.[0] || 'U' }}
+                {{ user?.name?.[0] || user?.email?.[0] || 'U' }}
               </span>
             </button>
 
@@ -111,6 +111,35 @@ import { CartService } from '../../api/api/cart.service';
               </ul>
             </div>
           </div>
+          <ng-template #guestActions>
+            <div class="flex items-center gap-2">
+              <a
+                routerLink="/login"
+                class="inline-flex items-center justify-center h-10 px-4 rounded-lg border border-gray-200 hover:bg-gray-100 text-sm"
+                >Login</a
+              >
+              <a
+                routerLink="/register"
+                class="inline-flex items-center justify-center h-10 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-sm"
+                >Register</a
+              >
+            </div>
+          </ng-template>
+
+          <!-- Cart icon -->
+          <a
+            routerLink="/cart"
+            class="ml-2 relative inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 hover:bg-gray-100"
+            aria-label="Panier"
+          >
+            <mat-icon class="!text-base">shopping_cart</mat-icon>
+            <span
+              *ngIf="cartCount > 0"
+              class="absolute -top-1 -right-1 text-[10px] leading-none rounded-full bg-amber-500 text-white px-1.5 py-0.5"
+            >
+              {{ cartCount }}
+            </span>
+          </a>
 
           <!-- Mobile burger -->
           <button
@@ -161,19 +190,6 @@ import { CartService } from '../../api/api/cart.service';
                 class="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-cyan-700 md:p-0"
                 >Produits</a
               >
-            </li>
-            <li>
-              <a
-                routerLink="/cart"
-                class="relative block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-cyan-700 md:p-0"
-              >
-                Panier
-                <span
-                  *ngIf="cartCount > 0"
-                  class="absolute -top-1 -right-2 text-xs rounded-full bg-amber-500 text-white px-2"
-                  >{{ cartCount }}</span
-                >
-              </a>
             </li>
           </ul>
         </div>

@@ -325,31 +325,6 @@ export class LandingPage {
   newsletterEmail = signal<string>('');
   newsletterError = signal<string | null>(null);
 
-  generateMockProducts(count: number): any[] {
-    const samples = [
-      'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&auto=format&fit=crop&w=800',
-      'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&auto=format&fit=crop&w=800',
-      'https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&auto=format&fit=crop&w=800',
-      'https://images.unsplash.com/photo-1492447166138-50c3889fccb1?q=80&auto=format&fit=crop&w=800',
-    ];
-    return Array.from({ length: count }).map((_, i) => ({
-      id: 'mock-' + i + '-' + Math.random().toString(36).slice(2, 8),
-      title: 'Produit ' + (i + 1),
-      name: 'Produit ' + (i + 1),
-      price: Math.round((20 + Math.random() * 200) * 100) / 100,
-      currency: 'EUR',
-      pourcentages_tva: 0.192,
-      remise: [0, 5, 10, 15][i % 4],
-      rating: Math.floor(3 + Math.random() * 3),
-      reviewsCount: Math.floor(5 + Math.random() * 40),
-      quantity: Math.floor(Math.random() * 25),
-      sold_out: Math.random() < 0.15,
-      state_product: ['Neuf', 'Reconditionné A', 'Reconditionné B'][i % 3],
-      images: [{ image_resize: samples[i % samples.length] }],
-      description: 'Produit mock pour présentation',
-    }));
-  }
-
   ngOnInit() {
     this.fetchSection('deals', 'deal');
     this.fetchSection('best', 'best');
@@ -373,10 +348,9 @@ export class LandingPage {
         setLoading(false);
       },
       error: () => {
-        const mocks = this.generateMockProducts(8);
-        if (section === 'deals') this.deals.set(mocks);
-        if (section === 'best') this.best.set(mocks);
-        if (section === 'news') this.news.set(mocks);
+        if (section === 'deals') this.deals.set([]);
+        if (section === 'best') this.best.set([]);
+        if (section === 'news') this.news.set([]);
         setLoading(false);
       },
     });

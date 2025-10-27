@@ -285,9 +285,16 @@ export class ProductListItemComponent {
   }
 
   getImage(p: any): string {
+    // Prefer direct image field if provided by backend (Produit.image)
+    const direct = typeof p?.image === 'string' ? p.image.trim() : '';
+    if (direct) return direct;
+
+    // Otherwise, use first image from images[] if present
     const img = p?.images?.[0];
-    if (typeof img === 'string') return img;
+    if (typeof img === 'string' && img.trim()) return img.trim();
     if (img?.image_resize) return img.image_resize;
+
+    // Fallback placeholder
     return 'https://via.placeholder.com/480x320?text=Product';
   }
 

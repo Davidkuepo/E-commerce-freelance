@@ -75,7 +75,7 @@ export class ProfileDashboardPage {
     if (isAdmin) {
       base.push({ label: 'Administration', icon: 'admin_panel_settings', link: '/profile/admin' });
       base.push({ label: 'Utilisateurs', icon: 'group', link: '/profile/users' });
-      base.push({ label: 'Créer produit', icon: 'add_box', link: '/profile/products/new' });
+      base.push({ label: 'Gestion produits', icon: 'add_box', link: '/profile/products' });
     }
     return base;
   }

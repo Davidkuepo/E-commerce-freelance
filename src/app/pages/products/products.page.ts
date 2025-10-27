@@ -1,19 +1,20 @@
 import { CommonModule } from '@angular/common';
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { RouterLink, ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { PanierActions } from '../../store/panier/panier.store';
 
 import { ProduitService } from '../../api/api/produit.service';
 import { CartService } from '../../api/api/cart.service';
 import { Product } from '../../api';
-import { ProductCard } from '../../components/layout/components';
 import { ProductCartItemComponent } from '../../components/product/product-cart-item.component';
 import { ProductListItemComponent } from '../../components/product/product-list-item.component';
 import { TextInputWrapper, ButtonWrapper, CheckboxWrapper } from '../../components/form/wrappers';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-const adaptProduitToProduct = (d: any): Product =>
-  ({
+const adaptProduitToProduct = (d: any): Product => {
+  const img = typeof d?.image === 'string' ? d.image.trim() : '';
+  return {
     id: d?.produitCode,
     name: d?.nom,
     description: d?.description ?? '',
@@ -22,30 +23,29 @@ const adaptProduitToProduct = (d: any): Product =>
     quantity: Number(d?.stock ?? 0),
     sold_out: Number(d?.stock ?? 0) <= 0,
     state_product: d?.state ?? undefined,
-    images: [],
-  }) as any;
+    images: img ? [img] : [],
+  } as any;
+};
 
 @Component({
   selector: 'app-products',
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     ProductCartItemComponent,
     ProductListItemComponent,
-    ProductCard,
     TextInputWrapper,
     ButtonWrapper,
     CheckboxWrapper,
+    MatSnackBarModule,
   ],
   template: `
-    <section class="container mx-auto py-6 space-y-5">
-      <div class="flex items-center justify-between">
+    <section class="container mx-auto py-10 space-y-10">
+      <div class="flex items-center justify-between mb-6">
         <h2 class="text-2xl font-semibold">Tous les produits</h2>
         <div class="flex items-center gap-2">
           <div class="w-64">
             <app-text-input
-              label="Rechercher"
               [placeholder]="'Rechercher...'"
               [value]="query()"
               (valueChange)="query.set($event)"
@@ -81,96 +81,105 @@ const adaptProduitToProduct = (d: any): Product =>
         </div>
       </div>
 
-      <!-- Filters -->
-      <div class="rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
-        <div class="flex items-center justify-between mb-3">
-          <div class="font-semibold">Filtres</div>
-          <div class="flex items-center gap-2">
-            <button
-              class="px-3 py-1 rounded-md border border-gray-200 hover:bg-gray-50"
-              (click)="resetFilters()"
+      <!-- Filters + Products layout -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <!-- Left: vertical filters -->
+        <aside class="md:col-span-3">
+          <div class="rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="font-semibold">Filtres</div>
+              <div class="flex items-center gap-2">
+                <button
+                  class="px-3 py-1 rounded-md border border-gray-200 hover:bg-gray-50"
+                  (click)="resetFilters()"
+                >
+                  Réinitialiser
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <app-text-input
+                label="Prix min"
+                [type]="'number'"
+                [value]="minPrice() + ''"
+                (valueChange)="minPrice.set(+$event || 0)"
+              ></app-text-input>
+
+              <app-text-input
+                label="Prix max"
+                [type]="'number'"
+                [value]="maxPrice() + ''"
+                (valueChange)="maxPrice.set(+$event || 0)"
+              ></app-text-input>
+
+              <app-text-input
+                label="Note minimale"
+                [type]="'number'"
+                [hint]="'Entrez une valeur entre 0 et 5'"
+                [value]="minRating() + ''"
+                (valueChange)="minRating.set(+$event || 0)"
+              ></app-text-input>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Etat</label>
+                <select
+                  class="block w-full h-12 rounded-lg border border-gray-300 bg-white px-4 text-gray-800 placeholder:text-gray-400 shadow-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1 transition-all duration-200 outline-none"
+                  [value]="stateFilter()"
+                  (change)="onStateChange($event)"
+                >
+                  <option value="all">Tous</option>
+                  <option *ngFor="let s of states()" [value]="s">{{ s }}</option>
+                </select>
+              </div>
+
+              <app-checkbox
+                label="En stock seulement"
+                [checked]="inStockOnly()"
+                (checkedChange)="inStockOnly.set($event)"
+              ></app-checkbox>
+
+              <div class="pt-1">
+                <app-button color="primary" [fullWidth]="true" (clicked)="search()"
+                  >Appliquer les filtres</app-button
+                >
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Right: products -->
+        <div class="md:col-span-9">
+          <div class="flex items-center justify-center" *ngIf="loading()">
+            <span class="loading loading-spinner loading-md text-primary"></span>
+          </div>
+
+          <ng-container *ngIf="!loading()">
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 gap-6"
+              *ngIf="viewMode() === 'list'; else cardGridProducts"
             >
-              Réinitialiser
-            </button>
-          </div>
+              <app-product-list-item
+                *ngFor="let p of filteredProducts()"
+                [product]="p"
+                (addToCart)="addToCart($event)"
+              />
+            </div>
+            <ng-template #cardGridProducts>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <app-product-cart-item
+                  *ngFor="let p of filteredProducts()"
+                  [product]="p"
+                  (addToCart)="addToCart($event)"
+                />
+              </div>
+            </ng-template>
+
+            <div class="text-center text-gray-500 mt-4" *ngIf="filteredProducts().length === 0">
+              Aucun produit trouvé.
+            </div>
+          </ng-container>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <app-text-input
-              label="Prix min"
-              [type]="'number'"
-              [value]="minPrice() + ''"
-              (valueChange)="minPrice.set(+$event || 0)"
-            ></app-text-input>
-          </div>
-          <div>
-            <app-text-input
-              label="Prix max"
-              [type]="'number'"
-              [value]="maxPrice() + ''"
-              (valueChange)="maxPrice.set(+$event || 0)"
-            ></app-text-input>
-          </div>
-          <div>
-            <app-text-input
-              label="Note minimale"
-              [type]="'number'"
-              [hint]="'Entrez une valeur entre 0 et 5'"
-              [value]="minRating() + ''"
-              (valueChange)="minRating.set(+$event || 0)"
-            ></app-text-input>
-          </div>
-          <div>
-            <label class="block text-xs text-gray-600 mb-1">Etat</label>
-            <select
-              class="w-full rounded-md border border-gray-200 px-3 py-2"
-              [value]="stateFilter()"
-              (change)="onStateChange($event)"
-            >
-              <option value="all">Tous</option>
-              <option *ngFor="let s of states()" [value]="s">{{ s }}</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="mt-3 flex items-center gap-3">
-          <app-checkbox
-            label="En stock seulement"
-            [checked]="inStockOnly()"
-            (checkedChange)="inStockOnly.set($event)"
-          ></app-checkbox>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-center" *ngIf="loading()">
-        <span class="loading loading-spinner loading-md text-primary"></span>
-      </div>
-
-      <ng-container *ngIf="!loading()">
-        <div
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-          *ngIf="viewMode() === 'list'; else cardGridProducts"
-        >
-          <app-product-list-item
-            *ngFor="let p of filteredProducts()"
-            [product]="p"
-            (addToCart)="addToCart($event)"
-          />
-        </div>
-        <ng-template #cardGridProducts>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <app-product-cart-item
-              *ngFor="let p of filteredProducts()"
-              [product]="p"
-              (addToCart)="addToCart($event)"
-            />
-          </div>
-        </ng-template>
-      </ng-container>
-
-      <div class="text-center text-gray-500" *ngIf="!loading() && filteredProducts().length === 0">
-        Aucun produit trouvé.
       </div>
     </section>
   `,
@@ -182,6 +191,7 @@ export class ProductsPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
+  private readonly snack = inject(MatSnackBar);
 
   products = signal<Product[]>([]);
   loading = signal<boolean>(false);
@@ -307,8 +317,58 @@ export class ProductsPage {
         return 'guest';
       }
     })();
-    const panierCode = clientCode;
+
     const produitCode = product.id as string;
+
+    // Guest fallback: maintain local storage cart when not authenticated
+    if (clientCode === 'guest') {
+      try {
+        const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('guestCart') : null;
+        const cart = raw ? JSON.parse(raw) : { items: [], total: 0, currency: 'EUR' };
+
+        const items = Array.isArray(cart.items) ? cart.items : [];
+        const existingIdx = items.findIndex(
+          (it: any) =>
+            String(it?.itemId || it?.product?.id || it?.product?.produitCode) === produitCode,
+        );
+
+        if (existingIdx >= 0) {
+          const currentQty = Number(items[existingIdx].quantity || 1);
+          items[existingIdx].quantity = currentQty + 1;
+          items[existingIdx].subtotal =
+            Number(items[existingIdx].product?.price || 0) * items[existingIdx].quantity;
+        } else {
+          items.push({
+            itemId: produitCode,
+            product: {
+              id: produitCode,
+              name: (product as any)?.name,
+              price: Number((product as any)?.price || 0),
+              currency: (product as any)?.currency || 'EUR',
+              image: (product as any)?.images?.[0] || (product as any)?.image || '',
+            },
+            quantity: 1,
+            subtotal: Number((product as any)?.price || 0),
+          });
+        }
+
+        cart.items = items;
+        cart.total = items.reduce(
+          (sum: number, it: any) => sum + Number(it.product?.price || 0) * Number(it.quantity || 1),
+          0,
+        );
+        cart.currency = cart.currency || 'EUR';
+
+        localStorage.setItem('guestCart', JSON.stringify(cart));
+        this.snack.open('Ajouté au panier', undefined, { duration: 2000 });
+      } catch {
+        this.snack.open('Échec ajout au panier', undefined, { duration: 2500 });
+      }
+      return;
+    }
+
+    // Authenticated flow: use Panier API
+    const panierCode = clientCode;
     this.store.dispatch(PanierActions.addProduct({ panierCode, produitCode, quantite: 1 }));
   }
 }

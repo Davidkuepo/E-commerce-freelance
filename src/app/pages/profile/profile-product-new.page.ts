@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TextInputWrapper, TextAreaWrapper, ButtonWrapper } from '../../components/form/wrappers';
@@ -49,7 +49,7 @@ import { BASE_PATH } from '../../api/variables';
                 <mat-icon class="!text-2xl">inventory_2</mat-icon>
               </div>
               <div>
-                <h1 class="text-2xl font-bold text-gray-900">Créer un nouveau produit</h1>
+                <h1 class="text-2xl font-bold text-gray-900">{{ isEdit() ? 'Modifier le produit' : 'Créer un nouveau produit' }}</h1>
                 <p class="text-gray-500 text-sm">Ajoutez un produit à votre catalogue rapidement</p>
               </div>
             </div>
@@ -307,6 +307,7 @@ export class ProfileProductNewPage {
   private readonly snack = inject(MatSnackBar);
   private readonly http = inject(HttpClient);
   private readonly basePathToken = inject(BASE_PATH, { optional: true }) as string | null;
+  private readonly route = inject(ActivatedRoute);
 
   produitCode = signal<string>('');
   name = signal<string>('');
@@ -318,12 +319,31 @@ export class ProfileProductNewPage {
   isSaving = signal<boolean>(false);
 
   images = signal<{ id: number; url: string; name: string }[]>([]);
+  pendingFiles = signal<File[]>([]);
   isUploading = signal<boolean>(false);
   dragActive = signal<boolean>(false);
+  isEdit = signal<boolean>(false);
+  originalCode = signal<string>('');
 
   ngOnInit(): void {
-    if (!this.produitCode()) {
-      this.produitCode.set(this.generateProductCode());
+    try {
+      this.route.queryParamMap.subscribe((params) => {
+        const editCode = params.get('edit');
+        if (editCode) {
+          this.isEdit.set(true);
+          this.originalCode.set(editCode);
+          this.loadProduct(editCode);
+        } else {
+          this.isEdit.set(false);
+          if (!this.produitCode()) {
+            this.produitCode.set(this.generateProductCode());
+          }
+        }
+      });
+    } catch {
+      if (!this.produitCode()) {
+        this.produitCode.set(this.generateProductCode());
+      }
     }
   }
 
@@ -342,7 +362,16 @@ export class ProfileProductNewPage {
   onFileInputChange(e: Event): void {
     const files = (e.target as HTMLInputElement)?.files;
     if (files && files.length > 0) {
-      this.uploadFiles(files);
+      const arr = Array.from(files);
+      const nextPending = [...this.pendingFiles(), ...arr];
+      this.pendingFiles.set(nextPending);
+      // Add local previews for UX (id=0 indicates local preview)
+      const previews = arr.map((file) => ({
+        id: 0,
+        url: URL.createObjectURL(file),
+        name: file.name,
+      }));
+      this.images.set([...this.images(), ...previews]);
       (e.target as HTMLInputElement).value = '';
     }
   }
@@ -362,13 +391,27 @@ export class ProfileProductNewPage {
     this.dragActive.set(false);
     const files = e.dataTransfer?.files;
     if (files && files.length > 0) {
-      this.uploadFiles(files);
+      const arr = Array.from(files);
+      const nextPending = [...this.pendingFiles(), ...arr];
+      this.pendingFiles.set(nextPending);
+      // Previews (id=0) shown until upload completes
+      const previews = arr.map((file) => ({
+        id: 0,
+        url: URL.createObjectURL(file),
+        name: file.name,
+      }));
+      this.images.set([...this.images(), ...previews]);
     }
   }
 
-  private uploadFiles(fileList: FileList | File[]): void {
-    const files = Array.from(fileList);
-    if (files.length === 0) return;
+  private uploadFiles(fileList: FileList | File[], onComplete?: () => void): void {
+    const files: File[] = Array.isArray(fileList)
+      ? (fileList as File[])
+      : Array.from(fileList as FileList);
+    if (files.length === 0) {
+      if (onComplete) onComplete();
+      return;
+    }
 
     this.isUploading.set(true);
 
@@ -380,20 +423,24 @@ export class ProfileProductNewPage {
 
     let remaining = files.length;
 
-    files.forEach((file) => {
+    files.forEach((file: File) => {
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', file, file.name);
 
       this.http.post<any>(url, fd).subscribe({
         next: (res) => {
           const id = Number(res?.id ?? 0);
-          const downloadUrl = `${base}/files/download/${id}`;
+          const downloadUrl = String(res?.url ?? `${base}/files/download/${id}`);
           const item = {
             id,
             url: downloadUrl,
             name: String(res?.name ?? file.name),
           };
-          this.images.set([...this.images(), item]);
+          // Replace matching local preview (id=0 + same name) with server item
+          this.images.set([
+            ...this.images().filter((it) => !(it.id === 0 && it.name === file.name)),
+            item,
+          ]);
         },
         error: () => {
           this.snack.open(`❌ Échec du téléversement de ${file.name}`, 'Fermer', {
@@ -407,12 +454,17 @@ export class ProfileProductNewPage {
           remaining -= 1;
           if (remaining === 0) {
             this.isUploading.set(false);
+            // Purge any remaining local previews (id === 0)
+            this.images.set(this.images().filter((img) => Number(img.id) > 0));
+            // Clear pending queue
+            this.pendingFiles.set([]);
             this.snack.open('✅ Téléversement terminé', 'Fermer', {
               duration: 2000,
               horizontalPosition: 'end',
               verticalPosition: 'top',
               panelClass: ['snack-success'],
             });
+            if (onComplete) onComplete();
           }
         },
       });
@@ -451,6 +503,42 @@ export class ProfileProductNewPage {
     this.images.set(list);
   }
 
+  private loadProduct(code: string): void {
+    this.isSaving.set(true);
+    try {
+      this.produitService.produitGetGet(code).subscribe({
+        next: (res: any) => {
+          const item = res?.data || res;
+          this.produitCode.set(String(item?.produitCode || ''));
+          this.name.set(String(item?.nom || ''));
+          this.description.set(String(item?.description || ''));
+          this.price.set(String(item?.prix ?? '0'));
+          this.stock.set(String(item?.stock ?? '0'));
+          this.categorie.set(String(item?.categorie || ''));
+          this.state.set(String(item?.state || 'ACTIVE'));
+          const imgUrl = String(item?.image || '');
+          if (imgUrl) {
+            this.images.set([{ id: 0, url: imgUrl, name: 'image' }]);
+          } else {
+            this.images.set([]);
+          }
+          this.isSaving.set(false);
+        },
+        error: () => {
+          this.isSaving.set(false);
+          this.snack.open('❌ Échec du chargement du produit', 'Fermer', {
+            duration: 3000,
+            horizontalPosition: 'end',
+            verticalPosition: 'top',
+            panelClass: ['snack-error'],
+          });
+        },
+      });
+    } catch {
+      this.isSaving.set(false);
+    }
+  }
+
   onSubmit(e: Event): void {
     e.preventDefault();
     const data: any = {
@@ -479,45 +567,71 @@ export class ProfileProductNewPage {
       return;
     }
 
-    // Attach uploaded images to payload
-    const imageIds = this.images()
-      .map((img) => Number(img.id))
-      .filter((id) => Number.isFinite(id) && id > 0);
-    if (imageIds.length > 0) {
-      (data as any).images = imageIds;
-      (data as any).mainImageId = imageIds[0];
-    }
+    const finalizeCreate = () => {
+      // Attach uploaded images to payload (server IDs only)
+      const mainImageUrl = this.images()[0]?.url;
+      if (mainImageUrl) {
+        (data as any).image = mainImageUrl;
+      }
 
-    this.isSaving.set(true);
-    try {
-      this.produitService.produitCreatePost(data as any).subscribe({
-        next: () => {
-          this.isSaving.set(false);
-          this.snack.open('✅ Produit créé avec succès !', 'Fermer', {
-            duration: 3000,
-            horizontalPosition: 'end',
-            verticalPosition: 'top',
-            panelClass: ['snack-success'],
-          });
-        },
-        error: () => {
-          this.isSaving.set(false);
-          this.snack.open('❌ Échec de la création du produit', 'Réessayer', {
+      this.isSaving.set(true);
+      try {
+        const action$ = this.isEdit()
+          ? this.produitService.produitUpdatePut(data as any)
+          : this.produitService.produitCreatePost(data as any);
+        action$.subscribe({
+          next: () => {
+            this.isSaving.set(false);
+            this.snack.open(
+              this.isEdit() ? '✅ Produit mis à jour !' : '✅ Produit créé avec succès !',
+              'Fermer',
+              {
+                duration: 3000,
+                horizontalPosition: 'end',
+                verticalPosition: 'top',
+                panelClass: ['snack-success'],
+              },
+            );
+          },
+          error: () => {
+            this.isSaving.set(false);
+            this.snack.open(
+              this.isEdit()
+                ? '❌ Échec de la mise à jour du produit'
+                : '❌ Échec de la création du produit',
+              'Réessayer',
+              {
+                duration: 4000,
+                horizontalPosition: 'end',
+                verticalPosition: 'top',
+                panelClass: ['snack-error'],
+              },
+            );
+          },
+        });
+      } catch {
+        this.isSaving.set(false);
+        this.snack.open(
+          this.isEdit()
+            ? '❌ Échec de la mise à jour du produit'
+            : '❌ Échec de la création du produit',
+          'Réessayer',
+          {
             duration: 4000,
             horizontalPosition: 'end',
             verticalPosition: 'top',
             panelClass: ['snack-error'],
-          });
-        },
-      });
-    } catch {
-      this.isSaving.set(false);
-      this.snack.open('❌ Échec de la création du produit', 'Réessayer', {
-        duration: 4000,
-        horizontalPosition: 'end',
-        verticalPosition: 'top',
-        panelClass: ['snack-error'],
-      });
+          },
+        );
+      }
+    };
+
+    const pending = this.pendingFiles();
+    if (pending && pending.length > 0) {
+      // Upload images via FormData automatically before saving the product
+      this.uploadFiles(pending, () => finalizeCreate());
+    } else {
+      finalizeCreate();
     }
   }
 }

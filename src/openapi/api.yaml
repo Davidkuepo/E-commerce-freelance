@@ -956,6 +956,9 @@ components:
           type: string
         state:
           type: string
+        image:
+          type: string
+          format: uri
       required:
         - produitCode
         - nom
@@ -980,6 +983,9 @@ components:
           type: string
         state:
           type: string
+        image:
+          type: string
+          format: uri
       required:
         - produitCode
         - nom

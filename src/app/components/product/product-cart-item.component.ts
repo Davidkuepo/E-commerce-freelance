@@ -16,10 +16,14 @@ import { MatIconModule } from '@angular/material/icon';
         <span>-{{ product?.remise }}%</span>
       </div>
 
-      <div class="product_img relative overflow-hidden rounded-xl bg-white">
-        <a [routerLink]="['/product', productId]" [queryParams]="getQueryParams()">
+      <div class="product_img relative rounded-xl bg-white p-2">
+        <a
+          [routerLink]="['/product', productId]"
+          [queryParams]="getQueryParams()"
+          class="block relative rounded-lg overflow-hidden"
+        >
           <img
-            class="w-full h-48 object-cover"
+            class="w-full h-48 object-cover rounded-lg"
             [src]="getImage(product)"
             [alt]="getTitle(product)"
           />
@@ -251,13 +255,20 @@ export class ProductCartItemComponent {
   }
 
   getImage(p: any): string {
+    // Prefer direct image field if provided by backend (may be present on Produit)
+    const direct = typeof p?.image === 'string' ? p.image.trim() : '';
+    if (direct) return direct;
+
+    // Otherwise, use first image from images[] if present
     const img = p?.images?.[0];
-    if (typeof img === 'string') {
-      return img;
+    if (typeof img === 'string' && img.trim()) {
+      return img.trim();
     }
     if (img?.image_resize) {
       return img.image_resize;
     }
+
+    // Fallback placeholder
     return 'https://via.placeholder.com/480x320?text=Product';
   }
 

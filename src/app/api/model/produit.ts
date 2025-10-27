@@ -16,4 +16,5 @@ export interface Produit {
   stock?: number;
   categorie?: string;
   state?: string;
+  image?: string;
 }

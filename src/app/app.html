@@ -1,5 +1,5 @@
 <app-header *ngIf="showChrome()"></app-header>
-<main class="bg-gray-50" [style.minHeight]="showChrome() ? 'calc(100vh - 64px)' : '100vh'">
+<main class="bg-gray-50 pt-8" [style.minHeight]="showChrome() ? 'calc(100vh - 64px)' : '100vh'">
   <router-outlet></router-outlet>
 </main>
 <app-footer *ngIf="showChrome()"></app-footer>
