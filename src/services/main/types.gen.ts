@@ -30,6 +30,14 @@ export type Role = {
     lastModifiedDate: string;
 };
 
+export type FileData = {
+    id?: number;
+    name: string;
+    pathData: string;
+    extension: string;
+    url: string;
+};
+
 export type AddressResponseDto = {
     addressCode: string;
     addressCountry: string;
@@ -114,6 +122,7 @@ export type ProduitRequestDto = {
     stock: number;
     categorie: string;
     state: 'ACTIVE' | 'INACTIVE' | 'DELETED' | 'CREATE_BUT_NOT_ACTIVE';
+    image: string;
 };
 
 export type ProduitResponseDto = {
@@ -124,6 +133,7 @@ export type ProduitResponseDto = {
     stock: number;
     categorie: string;
     state: 'ACTIVE' | 'INACTIVE' | 'DELETED' | 'CREATE_BUT_NOT_ACTIVE';
+    image: string;
 };
 
 export type RequestResultProduitResponseDto = {
@@ -225,6 +235,7 @@ export type ClientRequestDto = {
     telephone: string;
     adresse: string;
     state: 'ACTIVE' | 'INACTIVE' | 'DELETED' | 'CREATE_BUT_NOT_ACTIVE';
+    password: string;
 };
 
 export type ClientResponseDto = {
@@ -310,7 +321,7 @@ export type UserPrincipal = {
     token: string;
     userEmail: string;
     imageUrl: string;
-    userType: 'SUPER_ADMIN' | 'ADMIN' | 'USER';
+    userType: 'SUPER_ADMIN' | 'ADMIN' | 'USER' | 'CLIENT';
     userPassword: string;
     isEnabled: boolean;
     isAccountNonExpired: boolean;
@@ -497,10 +508,10 @@ export type PageRoleResponseDto = {
 export type PageableObject = {
     offset?: number;
     sort?: SortObject;
-    unpaged?: boolean;
     paged?: boolean;
     pageNumber?: number;
     pageSize?: number;
+    unpaged?: boolean;
 };
 
 export type RequestResultPageRoleResponseDto = {
@@ -640,14 +651,14 @@ export type UserPrincipalWritable = {
     token: string;
     userEmail: string;
     imageUrl: string;
-    userType: 'SUPER_ADMIN' | 'ADMIN' | 'USER';
+    userType: 'SUPER_ADMIN' | 'ADMIN' | 'USER' | 'CLIENT';
     userPassword: string;
     isEnabled: boolean;
     isAccountNonExpired: boolean;
     isCredentialsNonExpired: boolean;
     isAccountNonLocked: boolean;
-    authorities: Array<GrantedAuthority>;
     active?: boolean;
+    authorities: Array<GrantedAuthority>;
     username: string;
     password: string;
 };
@@ -1057,6 +1068,24 @@ export type ConfigureSystemResponses = {
 
 export type ConfigureSystemResponse = ConfigureSystemResponses[keyof ConfigureSystemResponses];
 
+export type UploadFileData = {
+    body?: {
+        file: Blob | File;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/files/upload';
+};
+
+export type UploadFileResponses = {
+    /**
+     * OK
+     */
+    200: FileData;
+};
+
+export type UploadFileResponse = UploadFileResponses[keyof UploadFileResponses];
+
 export type Create4Data = {
     body: CommandeRequestDto;
     path?: never;
@@ -1279,7 +1308,7 @@ export type FindByUserTypeData = {
     body?: never;
     path?: never;
     query: {
-        userType: 'SUPER_ADMIN' | 'ADMIN' | 'USER';
+        userType: 'SUPER_ADMIN' | 'ADMIN' | 'USER' | 'CLIENT';
     };
     url: '/api/user/findByUserType';
 };
@@ -1537,6 +1566,24 @@ export type CheckSystemConfigurationResponses = {
 };
 
 export type CheckSystemConfigurationResponse = CheckSystemConfigurationResponses[keyof CheckSystemConfigurationResponses];
+
+export type DownloadFileData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/files/download/{id}';
+};
+
+export type DownloadFileResponses = {
+    /**
+     * OK
+     */
+    200: string;
+};
+
+export type DownloadFileResponse = DownloadFileResponses[keyof DownloadFileResponses];
 
 export type GetByCode2Data = {
     body?: never;
@@ -1928,6 +1975,22 @@ export type Delete2Responses = {
 };
 
 export type Delete2Response = Delete2Responses[keyof Delete2Responses];
+
+export type DeleteFileData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/files/{id}';
+};
+
+export type DeleteFileResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type Delete3Data = {
     body?: never;

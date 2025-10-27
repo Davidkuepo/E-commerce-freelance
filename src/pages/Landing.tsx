@@ -1,13 +1,13 @@
 import { Link } from "react-router";
 import BaseImage from "@/components/BaseImage";
 import TextInput from "@/components/TextInput";
+import ProductItem from "@/components/ProductItem";
 import ButtonWrapper from "@/components/ButtonWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useProductListClient } from "@/hooks/api/useProductListClient";
 
 export default function Landing() {
-  const onNewsletterSubmit = () => {
-    console.log("Newsletter submitted");
-  };
+  const { data: products, isLoading } = useProductListClient();
 
   return (
     <section className="min-h-[calc(100vh-64px-240px)]">
@@ -185,23 +185,25 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* <div className="container mx-auto px-4 pb-12"> */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Meilleures offres</h2>
-        <Link to="/products?g=deal" className="text-cyan-700 hover:underline">
-          Voir tout
-        </Link>
+      <div className="container mx-auto px-4 pb-12">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Meilleures offres</h2>
+          <Link to="/products?g=deal" className="text-cyan-700 hover:underline">
+            Voir tout
+          </Link>
+        </div>
+        {isLoading ? (
+          <LoadingSpinner />
+        ) : products ? (
+          products.map((product) => (
+            <ProductItem key={product.produitCode} product={product} />
+          ))
+        ) : (
+          <div className="text-center text-gray-500">
+            Aucune offre pour le moment.
+          </div>
+        )}
       </div>
-      {/* <div className="flex items-center justify-center" *ngIf="loadingDeals()">
-          <span className="loading loading-spinner loading-md text-primary"></span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" *ngIf="!loadingDeals()">
-          <app-product-cart-item *ngFor="let p of deals()" [product]="p" />
-        </div>
-        <div className="text-center text-gray-500" *ngIf="!loadingDeals() && deals().length === 0">
-          Aucune offre pour le moment.
-        </div>
-      </div> */}
 
       <div className="container mx-auto px-4 pb-12">
         <div className="flex items-center justify-between mb-4">
@@ -210,15 +212,17 @@ export default function Landing() {
             Voir tout
           </Link>
         </div>
-        {/* <div className="flex items-center justify-center" *ngIf="loadingBest()">
-          <span className="loading loading-spinner loading-md text-primary"></span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" *ngIf="!loadingBest()">
-          <app-product-cart-item *ngFor="let p of best()" [product]="p" />
-        </div>
-        <div className="text-center text-gray-500" *ngIf="!loadingBest() && best().length === 0">
-          Aucune meilleure vente pour le moment.
-        </div> */}
+        {isLoading ? (
+          <LoadingSpinner />
+        ) : products ? (
+          products.map((product) => (
+            <ProductItem key={product.produitCode} product={product} />
+          ))
+        ) : (
+          <div className="text-center text-gray-500">
+            Aucune meilleure vente pour le moment.
+          </div>
+        )}
       </div>
 
       <div className="container mx-auto px-4 pb-12">
@@ -228,16 +232,17 @@ export default function Landing() {
             Voir tout
           </Link>
         </div>
-        <LoadingSpinner />
-        {/* <div className="flex items-center justify-center" *ngIf="loadingNews()">
-          <span className="loading loading-spinner loading-md text-primary"></span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" *ngIf="!loadingNews()">
-          <app-product-cart-item *ngFor="let p of news()" [product]="p" />
-        </div>
-        <div className="text-center text-gray-500" *ngIf="!loadingNews() && news().length === 0">
-          Aucune nouveauté pour le moment.
-        </div> */}
+        {isLoading ? (
+          <LoadingSpinner />
+        ) : products ? (
+          products.map((product) => (
+            <ProductItem key={product.produitCode} product={product} />
+          ))
+        ) : (
+          <div className="text-center text-gray-500">
+            Aucune nouveauté pour le moment.
+          </div>
+        )}
       </div>
 
       <div className="container mx-auto px-4 pb-16">
@@ -249,10 +254,7 @@ export default function Landing() {
             <p className="text-gray-600 mt-2">
               Inscrivez-vous à notre newsletter pour ne rien manquer.
             </p>
-            <form
-              className="mt-4 flex flex-col gap-3 md:flex-row"
-              onSubmit={onNewsletterSubmit}
-            >
+            <form className="mt-4 flex flex-col gap-3 md:flex-row">
               <div className="flex-1">
                 <TextInput label="Votre email" type="email" name="email" />
               </div>

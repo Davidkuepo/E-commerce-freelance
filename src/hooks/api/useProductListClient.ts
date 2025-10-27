@@ -1,4 +1,4 @@
-import { ProduitRestController } from "@/services/main";
+import { ProduitRestController, type ProduitResponseDto } from "@/services/main";
 import { useQuery } from "@tanstack/react-query";
 
 export const useProductListClient = () => {
@@ -10,6 +10,6 @@ export const useProductListClient = () => {
       if (error) throw error;
       return data;
     },
-    select: (response) => response?.data,
+    select: (response) => response?.data as ProduitResponseDto[],
   });
 };

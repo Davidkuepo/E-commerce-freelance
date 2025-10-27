@@ -27,8 +27,11 @@ export default function TextInput({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          labelFor
+        <label
+          htmlFor={name}
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          {label}
         </label>
       )}
 
@@ -40,6 +43,7 @@ export default function TextInput({
           type={type ?? "text"}
           placeholder={placeholder}
           disabled={disabled}
+          id={name}
           name={name}
           {...rest}
         />

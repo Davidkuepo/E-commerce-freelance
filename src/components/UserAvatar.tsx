@@ -1,7 +1,7 @@
 import BaseImage from "@/components/BaseImage";
 
 type Props = {
-  source: string;
+  source?: string;
   fallback?: string;
 };
 
@@ -15,5 +15,5 @@ export default function UserAvatar({ source, fallback }: Props) {
       />
     );
   }
-  return <span>{fallback}</span>;
+  return <span className="rounded-lg flex items-center justify-center shadow-sm p-1 text-white bg-gray-800">{fallback}</span>;
 }

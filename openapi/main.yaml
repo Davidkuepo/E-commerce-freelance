@@ -955,6 +955,44 @@
         ]
       }
     },
+    "/api/files/upload": {
+      "post": {
+        "tags": [
+          "file-controller"
+        ],
+        "operationId": "uploadFile",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/commande/create": {
       "post": {
         "tags": [
@@ -1451,7 +1489,8 @@
               "enum": [
                 "SUPER_ADMIN",
                 "ADMIN",
-                "USER"
+                "USER",
+                "CLIENT"
               ]
             }
           }
@@ -1945,6 +1984,38 @@
             "bearerAuth": []
           }
         ]
+      }
+    },
+    "/api/files/download/{id}": {
+      "get": {
+        "tags": [
+          "file-controller"
+        ],
+        "operationId": "downloadFile",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/commande/get": {
@@ -2733,6 +2804,30 @@
         ]
       }
     },
+    "/api/files/{id}": {
+      "delete": {
+        "tags": [
+          "file-controller"
+        ],
+        "operationId": "deleteFile",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/client/delete": {
       "delete": {
         "tags": [
@@ -2969,6 +3064,33 @@
           "roleDescription",
           "roleName",
           "state"
+        ]
+      },
+      "FileData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "pathData": {
+            "type": "string"
+          },
+          "extension": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "extension",
+          "name",
+          "pathData",
+          "url"
         ]
       },
       "AddressResponseDto": {
@@ -3411,11 +3533,15 @@
               "DELETED",
               "CREATE_BUT_NOT_ACTIVE"
             ]
+          },
+          "image": {
+            "type": "string"
           }
         },
         "required": [
           "categorie",
           "description",
+          "image",
           "nom",
           "prix",
           "state",
@@ -3453,11 +3579,15 @@
               "DELETED",
               "CREATE_BUT_NOT_ACTIVE"
             ]
+          },
+          "image": {
+            "type": "string"
           }
         },
         "required": [
           "categorie",
           "description",
+          "image",
           "nom",
           "prix",
           "produitCode",
@@ -3877,12 +4007,16 @@
               "DELETED",
               "CREATE_BUT_NOT_ACTIVE"
             ]
+          },
+          "password": {
+            "type": "string"
           }
         },
         "required": [
           "adresse",
           "email",
           "nom",
+          "password",
           "prenom",
           "state",
           "telephone"
@@ -4215,7 +4349,8 @@
             "enum": [
               "SUPER_ADMIN",
               "ADMIN",
-              "USER"
+              "USER",
+              "CLIENT"
             ]
           },
           "userPassword": {
@@ -4233,15 +4368,15 @@
           "isAccountNonLocked": {
             "type": "boolean"
           },
+          "active": {
+            "type": "boolean",
+            "writeOnly": true
+          },
           "authorities": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/GrantedAuthority"
             }
-          },
-          "active": {
-            "type": "boolean",
-            "writeOnly": true
           },
           "username": {
             "type": "string"
@@ -4897,9 +5032,6 @@
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "unpaged": {
-            "type": "boolean"
-          },
           "paged": {
             "type": "boolean"
           },
@@ -4910,6 +5042,9 @@
           "pageSize": {
             "type": "integer",
             "format": "int32"
+          },
+          "unpaged": {
+            "type": "boolean"
           }
         }
       },

@@ -1,9 +1,9 @@
+import type { UserInfo } from "@/utils/type";
 import { createContext, useContext, type Dispatch } from "react";
-import type { UserPrincipal } from "@/services/main";
 
 type Context = {
-  userInfo: UserPrincipal;
-  setUserInfo: Dispatch<React.SetStateAction<UserPrincipal>>;
+  userInfo: UserInfo;
+  setUserInfo: Dispatch<React.SetStateAction<UserInfo | undefined>>;
 };
 
 const session = createContext<Context>({} as Context);
