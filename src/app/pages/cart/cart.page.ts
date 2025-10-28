@@ -7,6 +7,10 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ButtonWrapper } from '../../components/form/wrappers';
 import { CartService } from '../../api/api/cart.service';
 import { DeleteModalComponent } from '../../components/modal/delete-modal.component';
+import { Store } from '@ngrx/store';
+import { PanierActions } from '../../store/panier/panier.store';
+import { PanierService } from '../../api/api/panier.service';
+import { ApiResponsePanier } from '../../api/model/apiResponsePanier';
 
 @Component({
   selector: 'app-cart',
@@ -28,14 +32,14 @@ import { DeleteModalComponent } from '../../components/modal/delete-modal.compon
         <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
       </div>
 
-      <div *ngIf="!loading() && items().length === 0" class="text-gray-600">
+      <div *ngIf="!loading() && (items() || []).length === 0" class="text-gray-600">
         Votre panier est vide.
         <a routerLink="/" class="text-cyan-700 font-medium hover:underline ml-1"
           >Continuer vos achats</a
         >
       </div>
 
-      <div class="space-y-6" *ngIf="!loading() && items().length > 0">
+      <div class="space-y-6" *ngIf="!loading() && (items() || []).length > 0">
         <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
           <div class="divide-y divide-gray-100">
             <div
@@ -67,16 +71,17 @@ import { DeleteModalComponent } from '../../components/modal/delete-modal.compon
                 >
                   <button
                     class="p-1 rounded hover:bg-gray-100"
-                    (click)="updateQuantity(item.itemId, item.quantity - 1)"
-                    [disabled]="item.quantity <= 1"
+                    (click)="updateQuantity(item.itemId, (item.quantity || 1) - 1)"
+                    [disabled]="(item.quantity || 1) <= 1 || updatingItem() === item.itemId"
                     aria-label="Diminuer"
                   >
                     <mat-icon class="!text-base">remove</mat-icon>
                   </button>
-                  <span class="min-w-6 text-center font-medium">{{ item.quantity }}</span>
+                  <span class="min-w-6 text-center font-medium">{{ item.quantity || 1 }}</span>
                   <button
                     class="p-1 rounded hover:bg-gray-100"
-                    (click)="updateQuantity(item.itemId, item.quantity + 1)"
+                    (click)="updateQuantity(item.itemId, (item.quantity || 1) + 1)"
+                    [disabled]="updatingItem() === item.itemId"
                     aria-label="Augmenter"
                   >
                     <mat-icon class="!text-base">add</mat-icon>
@@ -96,6 +101,7 @@ import { DeleteModalComponent } from '../../components/modal/delete-modal.compon
                   type="button"
                   class="p-2 rounded-md border border-gray-200 hover:bg-red-50 text-red-600"
                   (click)="openDelete(item.itemId, item.product?.name)"
+                  [disabled]="removingItem() === item.itemId"
                   title="Supprimer"
                 >
                   <mat-icon class="!text-base">delete</mat-icon>
@@ -115,9 +121,19 @@ import { DeleteModalComponent } from '../../components/modal/delete-modal.compon
             </div>
           </div>
           <div class="flex items-center justify-end">
-            <app-button color="primary" (clicked)="checkout()" icon="shopping_cart_checkout"
-              >Valider la commande</app-button
+            <app-button
+              color="primary"
+              (clicked)="checkout()"
+              icon="shopping_cart_checkout"
+              [disabled]="checkoutLoading()"
             >
+              <ng-container *ngIf="!checkoutLoading(); else loadingCheckout"
+                >Valider la commande</ng-container
+              >
+              <ng-template #loadingCheckout>
+                <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
+              </ng-template>
+            </app-button>
           </div>
         </div>
 
@@ -137,12 +153,18 @@ import { DeleteModalComponent } from '../../components/modal/delete-modal.compon
 export class CartPage {
   private readonly cartService = inject(CartService);
   private readonly snack = inject(MatSnackBar);
+  private readonly panierService = inject(PanierService);
 
   loading = signal<boolean>(false);
   items = signal<any[]>([]);
   total = signal<number>(0);
   currency = signal<string>('USD');
   isGuest = signal<boolean>(false);
+  panierCode = signal<string | null>(null);
+  // action loaders
+  updatingItem = signal<string | null>(null);
+  removingItem = signal<string | null>(null);
+  checkoutLoading = signal<boolean>(false);
   selectedItemId = signal<string>('');
   selectedItemName = signal<string>('');
   modalOpen = signal<boolean>(false);
@@ -153,30 +175,73 @@ export class CartPage {
 
   loadCart() {
     this.loading.set(true);
-    this.cartService.cartGet().subscribe({
-      next: (cart) => {
-        this.items.set(cart.items || []);
-        this.total.set(cart.total || 0);
-        this.currency.set(cart.currency || 'USD');
-        this.loading.set(false);
-      },
-      error: () => {
-        try {
-          const raw = localStorage.getItem('guestCart');
-          const cart = raw ? JSON.parse(raw) : { items: [], total: 0, currency: 'USD' };
-          this.items.set(cart.items || []);
-          this.total.set(cart.total || 0);
-          this.currency.set(cart.currency || 'USD');
-          this.isGuest.set(true);
-        } catch {
-          this.items.set([]);
-          this.total.set(0);
-          this.currency.set('USD');
-          this.isGuest.set(true);
-        }
-        this.loading.set(false);
-      },
-    });
+
+    const rawClient = localStorage.getItem('user');
+    const clientData = rawClient ? JSON.parse(rawClient) : null;
+    const clientCode = clientData ? clientData.id : null;
+
+    if (clientCode) {
+      this.panierService.panierByClientGet(clientCode).subscribe({
+        next: (response: ApiResponsePanier) => {
+          let mapped: any[] = [];
+          if (response.status === 'SUCCESS' && response.data) {
+            const panier = response.data;
+            this.panierCode.set(panier.panierCode || null);
+            mapped = Array.isArray(panier.produits)
+              ? panier.produits.map((p: any) => ({
+                  itemId: p.produitCode ?? p.produit?.code ?? String(p.produitCode ?? ''),
+                  quantity: p.quantite ?? p.quantity ?? 1,
+                  product: {
+                    name: p.nom ?? p.produit?.name ?? '',
+                    price: p.prix ?? p.produit?.price ?? 0,
+                    currency: 'XAF',
+                    image: p.image ?? p.produit?.image,
+                    images: p.images ?? p.produit?.images ?? [],
+                  },
+                }))
+              : [];
+            this.items.set(mapped);
+            const total = mapped.reduce(
+              (sum: number, it: any) => sum + (it.product?.price || 0) * (it.quantity || 1),
+              0,
+            );
+            this.total.set(total || 0);
+            this.currency.set('XAF');
+          } else {
+            this.items.set([]);
+            this.total.set(0);
+            this.currency.set('XAF');
+          }
+          this.loading.set(false);
+        },
+        error: () => {
+          this.handleGuestCart();
+          this.loading.set(false);
+        },
+      });
+    } else {
+      this.handleGuestCart();
+      // ensure we stop the global loading when there is no logged user
+      this.loading.set(false);
+    }
+  }
+
+  private handleGuestCart() {
+    try {
+      const raw = localStorage.getItem('guestCart');
+      const cart = raw ? JSON.parse(raw) : { items: [], total: 0, currency: 'USD' };
+      this.items.set(cart.items || []);
+      this.total.set(cart.total || 0);
+      this.currency.set(cart.currency || 'USD');
+      this.isGuest.set(true);
+    } catch {
+      this.items.set([]);
+      this.total.set(0);
+      this.currency.set('USD');
+      this.isGuest.set(true);
+    }
+    // safety: ensure loading indicator is removed after handling guest cart
+    this.loading.set(false);
   }
 
   updateQuantity(itemId: string, quantity: number) {
@@ -203,12 +268,22 @@ export class CartPage {
       }
       return;
     }
-    this.cartService.cartItemsItemIdPatch(itemId, { quantity }).subscribe({
+    // pour les utilisateurs connectés, utiliser l'API panier
+    const code = this.panierCode();
+    if (!code) {
+      this.snack.open('Impossible de trouver le panier', undefined, { duration: 2500 });
+      return;
+    }
+
+    // itemId est le produitCode dans le mapping ci-dessus
+    this.updatingItem.set(itemId);
+    this.panierService.panierAddProductPost(code, itemId, quantity).subscribe({
       next: () => {
         this.loadCart();
         this.snack.open('Quantité mise à jour', undefined, { duration: 2000 });
       },
       error: () => this.snack.open('Erreur de mise à jour', undefined, { duration: 2500 }),
+      complete: () => this.updatingItem.set(null),
     });
   }
 
@@ -232,12 +307,21 @@ export class CartPage {
       }
       return;
     }
-    this.cartService.cartItemsItemIdDelete(itemId).subscribe({
+    const code = this.panierCode();
+    if (!code) {
+      this.snack.open('Impossible de trouver le panier', undefined, { duration: 2500 });
+      return;
+    }
+
+    // itemId est le produitCode dans notre mapping
+    this.removingItem.set(itemId);
+    this.panierService.panierRemoveProductDelete(code, itemId).subscribe({
       next: () => {
         this.loadCart();
         this.snack.open('Article retiré', undefined, { duration: 2000 });
       },
       error: () => this.snack.open('Erreur lors de la suppression', undefined, { duration: 2500 }),
+      complete: () => this.removingItem.set(null),
     });
   }
 
@@ -254,12 +338,21 @@ export class CartPage {
       }
       return;
     }
-    this.cartService.cartCheckoutPost().subscribe({
+    const code = this.panierCode();
+    if (!code) {
+      this.snack.open('Impossible de trouver le panier', undefined, { duration: 2500 });
+      return;
+    }
+
+    // Si le backend n'a pas d'endpoint "checkout" pour panier, on vide le panier et affiche la confirmation.
+    this.checkoutLoading.set(true);
+    this.panierService.panierClearDelete(code).subscribe({
       next: () => {
         this.loadCart();
         this.snack.open('Commande validée', undefined, { duration: 2500 });
       },
       error: () => this.snack.open('Échec du paiement', undefined, { duration: 3000 }),
+      complete: () => this.checkoutLoading.set(false),
     });
   }
 

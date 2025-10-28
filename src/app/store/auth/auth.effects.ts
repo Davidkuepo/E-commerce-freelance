@@ -7,7 +7,7 @@ import { AuthService } from '../../api/api/auth.service';
 import { LoginRequest, RegisterRequest } from '../../api';
 import { catchError, exhaustMap, map, of, switchMap, tap, forkJoin } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { CartService } from '../../api/api/cart.service';
+import { PanierService } from '../../api/api/panier.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthEffects {
@@ -15,7 +15,7 @@ export class AuthEffects {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly snack = inject(MatSnackBar);
-  private readonly cartService = inject(CartService);
+  private readonly panierService = inject(PanierService);
 
   private static toErrorMessage(err: unknown): string {
     if (!err) return 'Unknown error';
@@ -124,12 +124,17 @@ export class AuthEffects {
             return of(null);
           }
 
+          // Get panierCode from localStorage or user context
+          let panierCode = '';
+          try {
+            const userRaw =
+              typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
+            const user = userRaw ? JSON.parse(userRaw) : null;
+            panierCode = user?.id || user?.email || '';
+          } catch {}
           const calls = items.map((it: any) =>
-            this.cartService
-              .cartItemsPost({
-                productId: it?.product?.id ?? it?.itemId,
-                quantity: it?.quantity ?? 1,
-              })
+            this.panierService
+              .panierAddProductPost(panierCode, it?.product?.id ?? it?.itemId, it?.quantity ?? 1)
               .pipe(catchError(() => of(null))),
           );
 

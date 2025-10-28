@@ -2,11 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-product-cart-item',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatIconModule],
+  imports: [CommonModule, RouterLink, MatIconModule, MatProgressSpinner],
   template: `
     <div class="product_box text-center relative" [ngClass]="{ watermark: product?.sold_out }">
       <div class="sold-out-badge" *ngIf="product?.sold_out">
@@ -96,9 +97,20 @@ import { MatIconModule } from '@angular/material/icon';
         </div>
 
         <div class="add-to-cart mt-3" *ngIf="!product?.sold_out; else disabledState">
-          <a class="btn btn-fill-out btn-radius" (click)="onAddToCart()">
+          <a
+            class="btn btn-fill-out btn-radius"
+            (click)="onAddToCart()"
+            [class.opacity-50]="addToCartLoading"
+            [class.pointer-events-none]="addToCartLoading"
+            [attr.aria-disabled]="addToCartLoading"
+          >
             <mat-icon class="!text-base align-[-2px]">add_shopping_cart</mat-icon>
-            <span>Ajouter au panier</span>
+            <ng-container *ngIf="!addToCartLoading; else loadingAddCart"
+              >Ajouter au panier</ng-container
+            >
+            <ng-template #loadingAddCart>
+              <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
+            </ng-template>
           </a>
         </div>
         <ng-template #disabledState>
@@ -244,6 +256,7 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class ProductCartItemComponent {
   @Input() product: any;
+  @Input() addToCartLoading: boolean = false;
   @Output() addToCart = new EventEmitter<any>();
 
   get productId(): string | number | null {

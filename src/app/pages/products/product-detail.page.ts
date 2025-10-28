@@ -5,7 +5,6 @@ import { Store } from '@ngrx/store';
 import { PanierActions } from '../../store/panier/panier.store';
 
 import { ProduitService } from '../../api/api/produit.service';
-import { CartService } from '../../api/api/cart.service';
 import { Product } from '../../api';
 import { ButtonWrapper, BaseImage } from '../../components/form/wrappers';
 import { MatIconModule } from '@angular/material/icon';
@@ -48,7 +47,6 @@ const adaptProduitToProduct = (d: any): Product => {
   template: `
     <section class="min-h-[calc(100vh-64px)] bg-gray-50">
       <div class="container mx-auto max-w-7xl px-6 py-10">
-        <!-- Breadcrumb -->
         <nav class="flex items-center gap-2 text-sm mb-4 text-gray-600">
           <a routerLink="/" class="hover:text-cyan-700 flex items-center gap-1">
             <mat-icon class="!text-base">home</mat-icon>
@@ -62,18 +60,15 @@ const adaptProduitToProduct = (d: any): Product => {
           }}</span>
         </nav>
 
-        <!-- Loader -->
         <div *ngIf="loading()" class="flex items-center justify-center py-12">
           <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
         </div>
 
-        <!-- Content -->
         <div
           *ngIf="!loading() && product()"
           class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden"
         >
           <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
-            <!-- Image column -->
             <div class="p-4 md:p-6 border-r border-gray-100 md:border-0">
               <div class="rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
                 <app-base-image
@@ -85,7 +80,6 @@ const adaptProduitToProduct = (d: any): Product => {
                 />
               </div>
 
-              <!-- Thumbnails -->
               <div *ngIf="(product()?.images || []).length > 1" class="mt-3 grid grid-cols-4 gap-2">
                 <img
                   *ngFor="let img of product()?.images; let i = index"
@@ -96,7 +90,6 @@ const adaptProduitToProduct = (d: any): Product => {
               </div>
             </div>
 
-            <!-- Info column -->
             <div class="p-6 md:p-10 space-y-5">
               <div class="flex items-start justify-between gap-3">
                 <h1 class="text-3xl md:text-4xl font-semibold text-gray-900">
@@ -167,7 +160,6 @@ const adaptProduitToProduct = (d: any): Product => {
                 </a>
               </div>
 
-              <!-- Meta info -->
               <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div class="flex items-center justify-between">
@@ -198,7 +190,6 @@ const adaptProduitToProduct = (d: any): Product => {
           </div>
         </div>
 
-        <!-- Empty -->
         <div *ngIf="!loading() && !product()" class="text-center text-gray-600 py-16">
           Produit introuvable.
           <a routerLink="/products" class="text-cyan-700 font-medium hover:underline ml-1"
@@ -213,7 +204,6 @@ const adaptProduitToProduct = (d: any): Product => {
 export class ProductDetailPage {
   private readonly route = inject(ActivatedRoute);
   private readonly produitService = inject(ProduitService);
-  private readonly cartService = inject(CartService);
   private readonly store = inject(Store);
   private readonly snack = inject(MatSnackBar);
 
@@ -256,7 +246,6 @@ export class ProductDetailPage {
 
     const produitCode = p.id as string;
 
-    // Guest fallback: maintain local storage cart when not authenticated
     if (clientCode === 'guest') {
       try {
         const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('guestCart') : null;
@@ -305,7 +294,6 @@ export class ProductDetailPage {
       return;
     }
 
-    // Authenticated flow: use Panier API
     this.store.dispatch(PanierActions.addProduct({ panierCode: '', produitCode, quantite: 1 }));
   }
 }

@@ -53,7 +53,6 @@ const adaptProduitToProduct = (d: any): Product => {
           </div>
           <app-button color="primary" (clicked)="search()">Rechercher</app-button>
 
-          <!-- View toggle icons -->
           <div
             class="ml-2 hidden sm:flex items-center gap-1 border border-gray-200 rounded-lg bg-white px-1"
           >
@@ -81,9 +80,7 @@ const adaptProduitToProduct = (d: any): Product => {
         </div>
       </div>
 
-      <!-- Filters + Products layout -->
       <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-        <!-- Left: vertical filters -->
         <aside class="md:col-span-3">
           <div class="rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
             <div class="flex items-center justify-between mb-3">
@@ -136,7 +133,6 @@ const adaptProduitToProduct = (d: any): Product => {
           </div>
         </aside>
 
-        <!-- Right: products -->
         <div class="md:col-span-9">
           <div class="flex items-center justify-center" *ngIf="loading()">
             <span class="loading loading-spinner loading-md text-primary"></span>
@@ -292,7 +288,6 @@ export class ProductsPage {
 
     const produitCode = product.id as string;
 
-    // Guest fallback: maintain local storage cart when not authenticated
     if (clientCode === 'guest') {
       try {
         const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('guestCart') : null;
@@ -341,7 +336,22 @@ export class ProductsPage {
       return;
     }
 
-    // Authenticated flow: use Panier API
-    this.store.dispatch(PanierActions.addProduct({ panierCode: '', produitCode, quantite: 1 }));
+    const cart = typeof localStorage !== 'undefined' ? localStorage.getItem('cart') : null;
+
+    let panierCode = null;
+
+    if (cart) {
+      try {
+        const cartData = JSON.parse(cart);
+        panierCode = cartData.data.panierCode;
+      } catch (error) {
+        console.error('Erreur lors du parsing du cart:', error);
+      }
+    }
+    console.log(panierCode);
+
+    this.store.dispatch(
+      PanierActions.addProduct({ panierCode: panierCode, produitCode, quantite: 1 }),
+    );
   }
 }

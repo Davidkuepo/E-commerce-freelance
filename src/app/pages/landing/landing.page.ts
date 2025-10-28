@@ -449,8 +449,22 @@ export class LandingPage {
       }
       return;
     }
+    const cart = typeof localStorage !== 'undefined' ? localStorage.getItem('cart') : null;
 
+    let panierCode = null;
+
+    if (cart) {
+      try {
+        const cartData = JSON.parse(cart);
+        panierCode = cartData.data.panierCode;
+      } catch (error) {
+        console.error('Erreur lors du parsing du cart:', error);
+      }
+    }
+    console.log(panierCode);
     // Authenticated flow: use Panier API
-    this.store.dispatch(PanierActions.addProduct({ panierCode: '', produitCode, quantite: 1 }));
+    this.store.dispatch(
+      PanierActions.addProduct({ panierCode: panierCode, produitCode, quantite: 1 }),
+    );
   }
 }

@@ -25,7 +25,10 @@ export class PanierEffects {
       ofType(PanierActions.create),
       exhaustMap(({ request }) =>
         this.panierService.panierCreatePost(request).pipe(
-          map((response) => PanierActions.createSuccess({ response })),
+          map((response) => {
+            localStorage.setItem('cart', JSON.stringify(response));
+            return PanierActions.createSuccess({ response });
+          }),
           catchError((err) =>
             of(PanierActions.createFailure({ error: PanierEffects.toErrorMessage(err) })),
           ),

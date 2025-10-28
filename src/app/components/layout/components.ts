@@ -17,8 +17,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
 import { AuthActions, selectStatus, selectUser } from '../../store/auth/auth.store';
 import { ButtonWrapper } from '../../components/form/wrappers';
-import { Product } from '../../api';
-import { CartService } from '../../api/api/cart.service';
+import { ApiResponsePanier, PanierService, Product } from '../../api';
 
 /**
  * AppHeader - Top navigation bar with brand, search placeholder, auth state, and cart link.
@@ -201,7 +200,7 @@ import { CartService } from '../../api/api/cart.service';
 export class AppHeader {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
-  private readonly cartService = inject(CartService);
+  private readonly panierService = inject(PanierService);
 
   user$ = this.store.select(selectUser);
   status$ = this.store.select(selectStatus);
@@ -246,15 +245,27 @@ export class AppHeader {
   }
 
   private loadCartCount(): void {
-    this.cartService.cartGet().subscribe({
-      next: (cart) => {
-        const items = cart.items || [];
-        this.cartCount = items.reduce((sum, it: any) => sum + (it?.quantity ?? 0), 0);
-      },
-      error: () => {
-        this.updateGuestCartCount();
-      },
-    });
+    const rawClient = localStorage.getItem('user');
+    const clientData = rawClient ? JSON.parse(rawClient) : null;
+    const clientCode = clientData ? clientData.id : null;
+
+    if (clientCode) {
+      this.panierService.panierByClientGet(clientCode).subscribe({
+        next: (response: ApiResponsePanier) => {
+          if (response.status === 'SUCCESS') {
+            const items = response.data.produits || [];
+            this.cartCount = items.reduce((sum, it) => sum, 0);
+          } else {
+            this.cartCount = 0;
+          }
+        },
+        error: () => {
+          this.updateGuestCartCount();
+        },
+      });
+    } else {
+      this.updateGuestCartCount();
+    }
   }
 
   private updateGuestCartCount(): void {
