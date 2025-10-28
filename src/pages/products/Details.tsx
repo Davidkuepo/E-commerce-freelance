@@ -46,7 +46,9 @@ function ProductDetailsContent({ product }: { product: ProduitResponseDto }) {
     <div className="flex flex-col">
       <BaseImage source={product.image} className="h-52" />
       <div className="flex gap-2 items-center my-4">
-        <Button variant="default">Edit</Button>
+        <Link to={`/product/${product.produitCode}/edit`}>
+          <Button variant="default">Edit</Button>
+        </Link>
         <DeleteProduct productId={product.produitCode} />
       </div>
       <div className="flex gap-10">
@@ -81,7 +83,9 @@ function ProductDetailsContent({ product }: { product: ProduitResponseDto }) {
               </Button>
             </CollapsibleTrigger>
           </div>
-          <CollapsibleContent className="mt-2 p-4 rounded-lg border">{product.description}</CollapsibleContent>
+          <CollapsibleContent className="mt-2 p-4 rounded-lg border">
+            {product.description}
+          </CollapsibleContent>
         </Collapsible>
       </div>
     </div>
