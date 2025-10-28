@@ -19,7 +19,7 @@ const adaptProduitToProduct = (d: any): Product => {
     name: d?.nom,
     description: d?.description ?? '',
     price: Number(d?.prix ?? 0),
-    currency: 'EUR',
+    currency: 'XAF',
     quantity: Number(d?.stock ?? 0),
     sold_out: Number(d?.stock ?? 0) <= 0,
     state_product: d?.state ?? undefined,
@@ -121,18 +121,6 @@ const adaptProduitToProduct = (d: any): Product => {
                 (valueChange)="minRating.set(+$event || 0)"
               ></app-text-input>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Etat</label>
-                <select
-                  class="block w-full h-12 rounded-lg border border-gray-300 bg-white px-4 text-gray-800 placeholder:text-gray-400 shadow-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1 transition-all duration-200 outline-none"
-                  [value]="stateFilter()"
-                  (change)="onStateChange($event)"
-                >
-                  <option value="all">Tous</option>
-                  <option *ngFor="let s of states()" [value]="s">{{ s }}</option>
-                </select>
-              </div>
-
               <app-checkbox
                 label="En stock seulement"
                 [checked]="inStockOnly()"
@@ -202,7 +190,6 @@ export class ProductsPage {
   maxPrice = signal<number>(0);
   minRating = signal<number>(0);
   inStockOnly = signal<boolean>(false);
-  stateFilter = signal<string>('all');
 
   ngOnInit() {
     this.route.queryParamMap.subscribe((params) => {
@@ -241,25 +228,11 @@ export class ProductsPage {
     const v = Number((e.target as HTMLInputElement)?.value ?? 0);
     this.minRating.set(isNaN(v) ? 0 : v);
   }
-  onStateChange(e: Event) {
-    const v = (e.target as HTMLSelectElement)?.value ?? 'all';
-    this.stateFilter.set(v || 'all');
-  }
   resetFilters() {
     this.minPrice.set(0);
     this.maxPrice.set(0);
     this.minRating.set(0);
     this.inStockOnly.set(false);
-    this.stateFilter.set('all');
-  }
-
-  states(): string[] {
-    const set = new Set<string>();
-    for (const p of this.products()) {
-      const s = (p as any)?.state_product;
-      if (s) set.add(String(s));
-    }
-    return Array.from(set);
   }
 
   filteredProducts(): Product[] {
@@ -268,20 +241,17 @@ export class ProductsPage {
     const maxP = this.maxPrice() || 0;
     const minR = this.minRating() || 0;
     const inStock = this.inStockOnly();
-    const state = this.stateFilter();
 
     return items.filter((p: any) => {
       const price = Number(p?.price ?? 0);
       const rating = Number(p?.rating ?? 0);
       const qty = Number(p?.quantity ?? 0);
       const soldOut = Boolean(p?.sold_out);
-      const st = String(p?.state_product ?? '');
 
       if (minP > 0 && price < minP) return false;
       if (maxP > 0 && price > maxP) return false;
       if (minR > 0 && rating < minR) return false;
       if (inStock && (soldOut || qty <= 0)) return false;
-      if (state && state !== 'all' && st !== state) return false;
       return true;
     });
   }
@@ -291,7 +261,9 @@ export class ProductsPage {
     this.produitService.produitAllGet().subscribe({
       next: (resp: any) => {
         const raw = resp?.data || [];
-        const mapped = raw.map(adaptProduitToProduct);
+        const mapped = raw
+          .map(adaptProduitToProduct)
+          .filter((p: any) => p.state_product === 'ACTIVE');
         const qv = (q || '').toLowerCase();
         const filtered = qv
           ? mapped.filter((it: any) =>
@@ -324,7 +296,7 @@ export class ProductsPage {
     if (clientCode === 'guest') {
       try {
         const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('guestCart') : null;
-        const cart = raw ? JSON.parse(raw) : { items: [], total: 0, currency: 'EUR' };
+        const cart = raw ? JSON.parse(raw) : { items: [], total: 0, currency: 'XAF' };
 
         const items = Array.isArray(cart.items) ? cart.items : [];
         const existingIdx = items.findIndex(
@@ -344,7 +316,7 @@ export class ProductsPage {
               id: produitCode,
               name: (product as any)?.name,
               price: Number((product as any)?.price || 0),
-              currency: (product as any)?.currency || 'EUR',
+              currency: (product as any)?.currency || 'XAF',
               image: (product as any)?.images?.[0] || (product as any)?.image || '',
             },
             quantity: 1,
@@ -357,9 +329,11 @@ export class ProductsPage {
           (sum: number, it: any) => sum + Number(it.product?.price || 0) * Number(it.quantity || 1),
           0,
         );
-        cart.currency = cart.currency || 'EUR';
+        cart.currency = cart.currency || 'XAF';
 
-        localStorage.setItem('guestCart', JSON.stringify(cart));
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('guestCart', JSON.stringify(cart));
+        }
         this.snack.open('Ajouté au panier', undefined, { duration: 2000 });
       } catch {
         this.snack.open('Échec ajout au panier', undefined, { duration: 2500 });
@@ -368,7 +342,6 @@ export class ProductsPage {
     }
 
     // Authenticated flow: use Panier API
-    const panierCode = clientCode;
-    this.store.dispatch(PanierActions.addProduct({ panierCode, produitCode, quantite: 1 }));
+    this.store.dispatch(PanierActions.addProduct({ panierCode: '', produitCode, quantite: 1 }));
   }
 }

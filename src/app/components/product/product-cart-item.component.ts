@@ -62,20 +62,20 @@ import { MatIconModule } from '@angular/material/icon';
         <div class="product_price mt-2 flex items-center justify-center gap-2">
           <span class="price-label text-xs text-gray-500">Prix TTC</span>
           <span class="price font-semibold text-cyan-700">
-            {{ priceTTC(product) | currency: product?.currency || 'EUR' : 'symbol' : '1.2-2' }}
+            {{ priceTTC(product) | currency: product?.currency || 'XAF' : 'symbol' : '1.2-2' }}
           </span>
         </div>
 
         <div
           class="tax-info mt-1 text-xs text-gray-500 flex items-center justify-center gap-1"
-          *ngIf="product?.pourcentages_tva"
+          *ngIf="product?.pourcentages_tva && product?.price"
         >
           <mat-icon class="!text-base">info</mat-icon>
           <span
             >Dont TVA :
             {{
-              product?.price * product?.pourcentages_tva
-                | currency: product?.currency || 'EUR' : 'symbol' : '1.2-2'
+              product.price * product.pourcentages_tva
+                | currency: product?.currency || 'XAF' : 'symbol' : '1.2-2'
             }}
           </span>
         </div>

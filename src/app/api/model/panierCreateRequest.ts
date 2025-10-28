@@ -9,7 +9,6 @@
  */
 
 export interface PanierCreateRequest {
-  panierCode: string;
   clientCode: string;
   state: string;
 }

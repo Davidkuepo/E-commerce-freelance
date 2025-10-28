@@ -3,22 +3,27 @@ import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/cor
 import { RouterLink } from '@angular/router';
 import { ProduitService } from '../../api/api/produit.service';
 import { Product } from '../../api';
+import { Store } from '@ngrx/store';
+import { PanierActions } from '../../store/panier/panier.store';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ProductCard } from '../../components/layout/components';
 import { ProductCartItemComponent } from '../../components/product/product-cart-item.component';
 import { ButtonWrapper, BaseImage, EmailInputWrapper } from '../../components/form/wrappers';
 
-const adaptProduitToProduct = (d: any): Product =>
-  ({
+const adaptProduitToProduct = (d: any): Product => {
+  const img = typeof d?.image === 'string' ? d.image.trim() : '';
+  return {
     id: d?.produitCode,
     name: d?.nom,
     description: d?.description ?? '',
     price: Number(d?.prix ?? 0),
-    currency: 'EUR',
+    currency: 'XAF',
     quantity: Number(d?.stock ?? 0),
     sold_out: Number(d?.stock ?? 0) <= 0,
     state_product: d?.state ?? undefined,
-    images: [],
-  }) as any;
+    images: img ? [img] : [],
+  } as any;
+};
 
 @Component({
   selector: 'app-landing',
@@ -31,6 +36,7 @@ const adaptProduitToProduct = (d: any): Product =>
     ButtonWrapper,
     EmailInputWrapper,
     BaseImage,
+    MatSnackBarModule,
   ],
   template: `
     <section class="min-h-[calc(100vh-64px-240px)]">
@@ -214,7 +220,11 @@ const adaptProduitToProduct = (d: any): Product =>
           <span class="loading loading-spinner loading-md text-primary"></span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" *ngIf="!loadingDeals()">
-          <app-product-cart-item *ngFor="let p of deals()" [product]="p" />
+          <app-product-cart-item
+            *ngFor="let p of deals()"
+            [product]="p"
+            (addToCart)="addToCart($event)"
+          />
         </div>
         <div class="text-center text-gray-500" *ngIf="!loadingDeals() && deals().length === 0">
           Aucune offre pour le moment.
@@ -236,7 +246,11 @@ const adaptProduitToProduct = (d: any): Product =>
           <span class="loading loading-spinner loading-md text-primary"></span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" *ngIf="!loadingBest()">
-          <app-product-cart-item *ngFor="let p of best()" [product]="p" />
+          <app-product-cart-item
+            *ngFor="let p of best()"
+            [product]="p"
+            (addToCart)="addToCart($event)"
+          />
         </div>
         <div class="text-center text-gray-500" *ngIf="!loadingBest() && best().length === 0">
           Aucune meilleure vente pour le moment.
@@ -258,7 +272,11 @@ const adaptProduitToProduct = (d: any): Product =>
           <span class="loading loading-spinner loading-md text-primary"></span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" *ngIf="!loadingNews()">
-          <app-product-cart-item *ngFor="let p of news()" [product]="p" />
+          <app-product-cart-item
+            *ngFor="let p of news()"
+            [product]="p"
+            (addToCart)="addToCart($event)"
+          />
         </div>
         <div class="text-center text-gray-500" *ngIf="!loadingNews() && news().length === 0">
           Aucune nouveauté pour le moment.
@@ -313,6 +331,8 @@ const adaptProduitToProduct = (d: any): Product =>
 })
 export class LandingPage {
   private readonly produitService = inject(ProduitService);
+  private readonly store = inject(Store);
+  private readonly snack = inject(MatSnackBar);
 
   deals = signal<Product[]>([]);
   best = signal<Product[]>([]);
@@ -341,7 +361,9 @@ export class LandingPage {
     this.produitService.produitAllGet().subscribe({
       next: (resp: any) => {
         const raw = resp?.data || [];
-        const mapped = raw.map(adaptProduitToProduct);
+        const mapped = raw
+          .map(adaptProduitToProduct)
+          .filter((p: any) => p.state_product !== 'INACTIVE');
         if (section === 'deals') this.deals.set(mapped);
         if (section === 'best') this.best.set(mapped);
         if (section === 'news') this.news.set(mapped);
@@ -364,5 +386,71 @@ export class LandingPage {
       return;
     }
     this.newsletterError.set(null);
+  }
+
+  addToCart(product: Product) {
+    const clientCode = (() => {
+      try {
+        const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
+        const u = raw ? JSON.parse(raw) : null;
+        return u?.id || u?.email || 'guest';
+      } catch {
+        return 'guest';
+      }
+    })();
+
+    const produitCode = product.id as string;
+
+    // Guest fallback: maintain local storage cart when not authenticated
+    if (clientCode === 'guest') {
+      try {
+        const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('guestCart') : null;
+        const cart = raw ? JSON.parse(raw) : { items: [], total: 0, currency: 'XAF' };
+
+        const items = Array.isArray(cart.items) ? cart.items : [];
+        const existingIdx = items.findIndex(
+          (it: any) =>
+            String(it?.itemId || it?.product?.id || it?.product?.produitCode) === produitCode,
+        );
+
+        if (existingIdx >= 0) {
+          const currentQty = Number(items[existingIdx].quantity || 1);
+          items[existingIdx].quantity = currentQty + 1;
+          items[existingIdx].subtotal =
+            Number(items[existingIdx].product?.price || 0) * items[existingIdx].quantity;
+        } else {
+          items.push({
+            itemId: produitCode,
+            product: {
+              id: produitCode,
+              name: (product as any)?.name,
+              price: Number((product as any)?.price || 0),
+              currency: (product as any)?.currency || 'XAF',
+              image: (product as any)?.images?.[0] || (product as any)?.image || '',
+            },
+            quantity: 1,
+            subtotal: Number((product as any)?.price || 0),
+          });
+        }
+
+        cart.items = items;
+        cart.total = items.reduce(
+          (sum: number, it: any) => sum + Number(it.product?.price || 0) * Number(it.quantity || 1),
+          0,
+        );
+        cart.currency = cart.currency || 'XAF';
+
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('guestCart', JSON.stringify(cart));
+        }
+        this.snack.open('Ajouté au panier', undefined, { duration: 2000 });
+      } catch {
+        this.snack.open('Échec ajout au panier', undefined, { duration: 2500 });
+      }
+      return;
+    }
+
+    // Authenticated flow: use Panier API
+    this.store.dispatch(PanierActions.addProduct({ panierCode: '', produitCode, quantite: 1 }));
   }
 }

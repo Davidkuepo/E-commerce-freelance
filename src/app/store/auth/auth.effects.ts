@@ -200,7 +200,7 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(AuthActions.register),
       exhaustMap(({ payload }: { payload: RegisterRequest }) =>
-        this.authService.authRegisterPost(payload).pipe(
+        this.authService.clientCreatePost(payload).pipe(
           map((user) => AuthActions.registerSuccess({ user })),
           catchError((err) =>
             of(AuthActions.registerFailure({ error: AuthEffects.toErrorMessage(err) })),
@@ -271,7 +271,7 @@ export class AuthEffects {
         } catch {}
         const code = clientCode || 'guest';
         return PanierActions.create({
-          request: { panierCode: code, clientCode: code, state: 'ACTIVE' } as any,
+          request: { clientCode: code, state: 'ACTIVE' } as any,
         });
       }),
     ),

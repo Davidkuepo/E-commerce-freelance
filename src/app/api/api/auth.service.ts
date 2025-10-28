@@ -342,103 +342,6 @@ export class AuthService extends BaseService {
   }
 
   /**
-   * Register a new user
-   * @param registerRequest
-   * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-   * @param reportProgress flag to report request and response progress.
-   */
-  public authRegisterPost(
-    registerRequest: RegisterRequest,
-    observe?: 'body',
-    reportProgress?: boolean,
-    options?: {
-      httpHeaderAccept?: 'application/json';
-      context?: HttpContext;
-      transferCache?: boolean;
-    },
-  ): Observable<User>;
-  public authRegisterPost(
-    registerRequest: RegisterRequest,
-    observe?: 'response',
-    reportProgress?: boolean,
-    options?: {
-      httpHeaderAccept?: 'application/json';
-      context?: HttpContext;
-      transferCache?: boolean;
-    },
-  ): Observable<HttpResponse<User>>;
-  public authRegisterPost(
-    registerRequest: RegisterRequest,
-    observe?: 'events',
-    reportProgress?: boolean,
-    options?: {
-      httpHeaderAccept?: 'application/json';
-      context?: HttpContext;
-      transferCache?: boolean;
-    },
-  ): Observable<HttpEvent<User>>;
-  public authRegisterPost(
-    registerRequest: RegisterRequest,
-    observe: any = 'body',
-    reportProgress: boolean = false,
-    options?: {
-      httpHeaderAccept?: 'application/json';
-      context?: HttpContext;
-      transferCache?: boolean;
-    },
-  ): Observable<any> {
-    if (registerRequest === null || registerRequest === undefined) {
-      throw new Error(
-        'Required parameter registerRequest was null or undefined when calling authRegisterPost.',
-      );
-    }
-
-    let localVarHeaders = this.defaultHeaders;
-
-    const localVarHttpHeaderAcceptSelected: string | undefined =
-      options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept(['application/json']);
-    if (localVarHttpHeaderAcceptSelected !== undefined) {
-      localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-    }
-
-    const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-    const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-    // to determine the Content-Type header
-    const consumes: string[] = ['application/json'];
-    const httpContentTypeSelected: string | undefined =
-      this.configuration.selectHeaderContentType(consumes);
-    if (httpContentTypeSelected !== undefined) {
-      localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
-    }
-
-    let responseType_: 'text' | 'json' | 'blob' = 'json';
-    if (localVarHttpHeaderAcceptSelected) {
-      if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-        responseType_ = 'text';
-      } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-        responseType_ = 'json';
-      } else {
-        responseType_ = 'blob';
-      }
-    }
-
-    let localVarPath = `/auth/register`;
-    const { basePath, withCredentials } = this.configuration;
-    return this.httpClient.request<User>('post', `${basePath}${localVarPath}`, {
-      context: localVarHttpContext,
-      body: registerRequest,
-      responseType: <any>responseType_,
-      ...(withCredentials ? { withCredentials } : {}),
-      headers: localVarHeaders,
-      observe: observe,
-      transferCache: localVarTransferCache,
-      reportProgress: reportProgress,
-    });
-  }
-
-  /**
    * Resend OTP for login
    * @param login
    * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -1013,6 +916,103 @@ export class AuthService extends BaseService {
     return this.httpClient.request<ApiResponseBoolean>('post', `${basePath}${localVarPath}`, {
       context: localVarHttpContext,
       body: verifyOtpRequest,
+      responseType: <any>responseType_,
+      ...(withCredentials ? { withCredentials } : {}),
+      headers: localVarHeaders,
+      observe: observe,
+      transferCache: localVarTransferCache,
+      reportProgress: reportProgress,
+    });
+  }
+
+  /**
+   * Register a new user
+   * @param registerRequest
+   * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+   * @param reportProgress flag to report request and response progress.
+   */
+  public clientCreatePost(
+    registerRequest: RegisterRequest,
+    observe?: 'body',
+    reportProgress?: boolean,
+    options?: {
+      httpHeaderAccept?: 'application/json';
+      context?: HttpContext;
+      transferCache?: boolean;
+    },
+  ): Observable<User>;
+  public clientCreatePost(
+    registerRequest: RegisterRequest,
+    observe?: 'response',
+    reportProgress?: boolean,
+    options?: {
+      httpHeaderAccept?: 'application/json';
+      context?: HttpContext;
+      transferCache?: boolean;
+    },
+  ): Observable<HttpResponse<User>>;
+  public clientCreatePost(
+    registerRequest: RegisterRequest,
+    observe?: 'events',
+    reportProgress?: boolean,
+    options?: {
+      httpHeaderAccept?: 'application/json';
+      context?: HttpContext;
+      transferCache?: boolean;
+    },
+  ): Observable<HttpEvent<User>>;
+  public clientCreatePost(
+    registerRequest: RegisterRequest,
+    observe: any = 'body',
+    reportProgress: boolean = false,
+    options?: {
+      httpHeaderAccept?: 'application/json';
+      context?: HttpContext;
+      transferCache?: boolean;
+    },
+  ): Observable<any> {
+    if (registerRequest === null || registerRequest === undefined) {
+      throw new Error(
+        'Required parameter registerRequest was null or undefined when calling clientCreatePost.',
+      );
+    }
+
+    let localVarHeaders = this.defaultHeaders;
+
+    const localVarHttpHeaderAcceptSelected: string | undefined =
+      options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept(['application/json']);
+    if (localVarHttpHeaderAcceptSelected !== undefined) {
+      localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+    }
+
+    const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+    const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+    // to determine the Content-Type header
+    const consumes: string[] = ['application/json'];
+    const httpContentTypeSelected: string | undefined =
+      this.configuration.selectHeaderContentType(consumes);
+    if (httpContentTypeSelected !== undefined) {
+      localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+    }
+
+    let responseType_: 'text' | 'json' | 'blob' = 'json';
+    if (localVarHttpHeaderAcceptSelected) {
+      if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+        responseType_ = 'text';
+      } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+        responseType_ = 'json';
+      } else {
+        responseType_ = 'blob';
+      }
+    }
+
+    let localVarPath = `/client/create`;
+    const { basePath, withCredentials } = this.configuration;
+    return this.httpClient.request<User>('post', `${basePath}${localVarPath}`, {
+      context: localVarHttpContext,
+      body: registerRequest,
       responseType: <any>responseType_,
       ...(withCredentials ? { withCredentials } : {}),
       headers: localVarHeaders,

@@ -229,7 +229,14 @@ export class RegisterPage {
 
     // Map to backend RegisterRequest (captures name, email, password)
     const displayName = `${prenom} ${nom}`.trim();
-    const payload: RegisterRequest = { name: displayName, email, password };
+    const payload: RegisterRequest = {
+      nom,
+      prenom,
+      email,
+      password,
+      telephone,
+      adresse,
+    };
     this.store.dispatch(AuthActions.register({ payload }));
     // TODO: Send téléphone/adresse to api/client/create when available
   }

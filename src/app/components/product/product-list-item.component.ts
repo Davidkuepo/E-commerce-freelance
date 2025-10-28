@@ -82,7 +82,7 @@ import { MatIconModule } from '@angular/material/icon';
               <div class="flex items-center gap-2">
                 <span class="price font-semibold text-cyan-700">
                   {{
-                    priceTTC(product) | currency: product?.currency || 'EUR' : 'symbol' : '1.2-2'
+                    priceTTC(product) | currency: product?.currency || 'XAF' : 'symbol' : '1.2-2'
                   }}
                 </span>
                 <span class="text-gray-500">TTC</span>
@@ -92,7 +92,7 @@ import { MatIconModule } from '@angular/material/icon';
                 Dont TVA :
                 {{
                   num(product?.price || 0) * num(product?.pourcentages_tva || 0)
-                    | currency: product?.currency || 'EUR' : 'symbol' : '1.2-2'
+                    | currency: product?.currency || 'XAF' : 'symbol' : '1.2-2'
                 }}
               </div>
 

@@ -37,7 +37,7 @@ const adaptProduitToProduct = (d: any): Product =>
     name: d?.nom,
     description: d?.description ?? '',
     price: Number(d?.prix ?? 0),
-    currency: 'EUR',
+    currency: 'XAF',
     quantity: Number(d?.stock ?? 0),
     sold_out: Number(d?.stock ?? 0) <= 0,
     state_product: d?.state ?? undefined,
@@ -358,8 +358,8 @@ export class LoginPage {
       <form (submit)="onSubmit($event)" class="space-y-4">
         <app-text-input
           label="Nom"
-          [value]="name()"
-          (valueChange)="name.set($event)"
+          [value]="nom()"
+          (valueChange)="nom.set($event)"
         ></app-text-input>
 
         <app-email-input
@@ -389,16 +389,20 @@ export class LoginPage {
 export class RegisterPage {
   private readonly store = inject(Store);
 
-  name = signal<string>('');
+  nom = signal<string>('');
+  prenom = signal<string>('');
   email = signal<string>('');
   password = signal<string>('');
 
   onSubmit(e: Event) {
     e.preventDefault();
     const payload: RegisterRequest = {
-      name: this.name(),
+      nom: this.nom(),
+      prenom: this.prenom(),
       email: this.email(),
       password: this.password(),
+      telephone: '',
+      adresse: '',
     };
     this.store.dispatch(AuthActions.register({ payload }));
   }
@@ -1924,7 +1928,7 @@ export class ProfileProductsPage {}
               <!-- Prix & Stock -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <app-text-input
-                  label="Prix (EUR)"
+                  label="Prix (XAF)"
                   [type]="'number'"
                   [value]="price()"
                   (valueChange)="price.set($event)"
@@ -2015,7 +2019,7 @@ export class ProfileProductsPage {}
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-500">Prix</span>
-                  <span class="font-medium">{{ price() || '0' }} EUR</span>
+                  <span class="font-medium">{{ price() || '0' }} XAF</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-500">Stock</span>

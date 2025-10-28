@@ -34,11 +34,11 @@ paths:
                 $ref: '#/components/schemas/LoginResponse'
         '401':
           description: Invalid credentials
-          content:
+          content:                                  
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /auth/register:
+  /client/create:
     post:
       tags:
         - Auth
@@ -712,19 +712,27 @@ components:
     RegisterRequest:
       type: object
       properties:
+        nom:
+          type: string
+        prenom:
+          type: string
         email:
           type: string
           format: email
+        telephone:
+          type: string
+        adresse:
+          type: string
         password:
           type: string
           format: password
-          minLength: 6
-        name:
-          type: string
       required:
+        - nom
+        - prenom
         - email
+        - telephone
+        - adresse
         - password
-        - name
     Error:
       type: object
       properties:
@@ -926,8 +934,8 @@ components:
     PanierCreateRequest:
       type: object
       properties:
-        panierCode:
-          type: string
+        # panierCode:
+        #   type: string
         clientCode:
           type: string
         state:

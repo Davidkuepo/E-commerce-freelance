@@ -12,18 +12,26 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
-const adaptProduitToProduct = (d: any): Product =>
-  ({
+const adaptProduitToProduct = (d: any): Product => {
+  let images: string[] = [];
+  if (Array.isArray(d?.images)) {
+    images = d.images;
+  } else if (typeof d?.image === 'string' && d.image.trim()) {
+    images = [d.image.trim()];
+  }
+
+  return {
     id: d?.produitCode,
     name: d?.nom,
     description: d?.description ?? '',
     price: Number(d?.prix ?? 0),
-    currency: 'EUR',
+    currency: 'XAF',
     quantity: Number(d?.stock ?? 0),
     sold_out: Number(d?.stock ?? 0) <= 0,
     state_product: d?.state ?? undefined,
-    images: [],
-  }) as any;
+    images: images,
+  } as any;
+};
 
 @Component({
   selector: 'app-product-detail',
@@ -127,7 +135,7 @@ const adaptProduitToProduct = (d: any): Product =>
               </div>
 
               <div class="text-cyan-700 text-4xl md:text-5xl font-extrabold">
-                {{ product()?.price | number: '1.0-2' }} {{ product()?.currency || 'EUR' }}
+                {{ product()?.price | number: '1.0-2' }} {{ product()?.currency || 'XAF' }}
               </div>
 
               <div class="flex items-center gap-2 text-gray-600">
@@ -252,7 +260,7 @@ export class ProductDetailPage {
     if (clientCode === 'guest') {
       try {
         const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('guestCart') : null;
-        const cart = raw ? JSON.parse(raw) : { items: [], total: 0, currency: 'EUR' };
+        const cart = raw ? JSON.parse(raw) : { items: [], total: 0, currency: 'XAF' };
 
         const items = Array.isArray(cart.items) ? cart.items : [];
         const existingIdx = items.findIndex(
@@ -272,7 +280,7 @@ export class ProductDetailPage {
               id: produitCode,
               name: (p as any)?.name,
               price: Number((p as any)?.price || 0),
-              currency: (p as any)?.currency || 'EUR',
+              currency: (p as any)?.currency || 'XAF',
               image: (p as any)?.images?.[0] || (p as any)?.image || '',
             },
             quantity: 1,
@@ -285,9 +293,11 @@ export class ProductDetailPage {
           (sum: number, it: any) => sum + Number(it.product?.price || 0) * Number(it.quantity || 1),
           0,
         );
-        cart.currency = cart.currency || 'EUR';
+        cart.currency = cart.currency || 'XAF';
 
-        localStorage.setItem('guestCart', JSON.stringify(cart));
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('guestCart', JSON.stringify(cart));
+        }
         this.snack.open('Ajouté au panier', undefined, { duration: 2000 });
       } catch {
         this.snack.open('Échec ajout au panier', undefined, { duration: 2500 });
@@ -296,7 +306,6 @@ export class ProductDetailPage {
     }
 
     // Authenticated flow: use Panier API
-    const panierCode = clientCode;
-    this.store.dispatch(PanierActions.addProduct({ panierCode, produitCode, quantite: 1 }));
+    this.store.dispatch(PanierActions.addProduct({ panierCode: '', produitCode, quantite: 1 }));
   }
 }
