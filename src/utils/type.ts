@@ -1,3 +1,4 @@
+import type { ProduitResponseDto } from "@/services/main";
 import * as yup from "yup";
 
 export type UserInfo = {
@@ -7,6 +8,13 @@ export type UserInfo = {
   lastName: string;
   email: string;
   token: string;
+};
+
+export type Cart = {
+	code: string;
+  hasCart: boolean;
+  totalItems: number;
+	items?: Array<ProduitResponseDto>;
 };
 
 export const loginSchema = yup
@@ -31,3 +39,14 @@ export const registerSchema = yup
     image: yup.string().required(),
   })
   .required();
+
+export const filterSchema = yup
+  .object({
+    name: yup.string().optional(),
+    minPrice: yup.string()
+			.notRequired()
+			.matches(/^\d+$/, { message: 'Only digits', excludeEmptyString: true }),
+    maxPrice: yup.string()
+			.notRequired()
+			.matches(/^\d+$/, { message: 'Only digits', excludeEmptyString: true }),
+  }).required();

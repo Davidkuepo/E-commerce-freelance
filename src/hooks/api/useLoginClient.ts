@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 
 import { setToken } from "@/utils/interceptors";
 import { AuthenticationRestController } from "@/services/main";
-import { useSession } from "@/context/useSession/SessionContext";
+import { useAuth } from "@/context/useAuth/AuthContext.tsx";
 import {
   STORAGE_USER_INFO_KEY,
   STORAGE_ACCESS_TOKEN_KEY,
@@ -11,7 +11,7 @@ import {
 } from "@/utils/constants";
 
 export const useLoginClient = () => {
-  const session = useSession();
+  const session = useAuth();
   const navigate = useNavigate();
 
   return useMutation({

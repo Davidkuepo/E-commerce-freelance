@@ -5,7 +5,9 @@ import { useForm } from "react-hook-form";
 
 export default function CreateProduct() {
   const { mutate } = useCreateProduct();
-  const { register, handleSubmit } = useForm({ resolver: yupResolver(registerSchema) });
+  const { register, handleSubmit } = useForm({
+    resolver: yupResolver(registerSchema),
+  });
 
   const onSubmit = handleSubmit((data) => mutate(data));
 

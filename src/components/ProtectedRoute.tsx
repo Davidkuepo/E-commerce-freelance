@@ -1,8 +1,8 @@
 import { Outlet, Navigate } from "react-router";
-import { useSession } from "@/context/useSession/SessionContext";
+import { useAuth } from "@/context/useAuth/AuthContext.tsx";
 
 export default function ProtectedRoute() {
-  const session = useSession();
+  const session = useAuth();
 
   if (session.userInfo.token) {
     return <Outlet />;

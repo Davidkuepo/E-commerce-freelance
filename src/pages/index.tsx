@@ -1,8 +1,8 @@
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router";
 
-import Landing from "@/pages/Landing";
 import AppLayout from "@/pages/layout";
+import WelcomePage from "@/pages/Welcome.tsx";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PageLoadingIndicator from "@/components/PageLoadingIndicator";
 
@@ -21,7 +21,7 @@ export default function Index() {
     <Suspense fallback={<PageLoadingIndicator />}>
       <Routes>
         <Route element={<AppLayout />}>
-          <Route index element={<Landing />} />
+          <Route index element={<WelcomePage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="product">
               <Route index element={<ProductList />} />

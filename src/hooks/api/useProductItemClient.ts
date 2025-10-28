@@ -5,9 +5,8 @@ export const useProductItemClient = (reference: string) => {
   return useQuery({
     queryKey: [reference, "product"],
     queryFn: async ({ queryKey }) => {
-      const [produitCode] = queryKey;
       const { data, error } = await ProduitRestController.getByCode({
-        query: { produitCode },
+        query: { produitCode: queryKey[0] },
       });
 
       if (error) throw error;

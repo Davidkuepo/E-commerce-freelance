@@ -1,7 +1,10 @@
+import type { ReactNode } from "react";
+
 type Props = {
   loading?: boolean;
   disabled?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
+  className?: string;
   type?: "button" | "submit" | "reset";
   variant: "warn" | "accent" | "default" | "neutral";
 };
@@ -19,6 +22,7 @@ export default function ButtonWrapper({
   disabled,
   type,
   children,
+  className,
 }: Props) {
   return (
     <button
@@ -26,9 +30,10 @@ export default function ButtonWrapper({
       disabled={disabled || loading}
       className={`
         font-medium text-sm sm:text-base transition-all
-        focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-sm 
-        inline-flex items-center justify-center gap-2 h-12 px-5 rounded-lg 
+        focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-sm
+        inline-flex items-center justify-center gap-2 py-2 px-5 rounded-lg
         disabled:opacity-60 disabled:cursor-not-allowed ${variants[variant]}
+        ${className ?? ""}
     `}
     >
       {loading && (

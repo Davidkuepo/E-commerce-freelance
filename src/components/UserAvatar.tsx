@@ -15,5 +15,9 @@ export default function UserAvatar({ source, fallback }: Props) {
       />
     );
   }
-  return <span className="rounded-lg flex items-center justify-center shadow-sm p-1 text-white bg-gray-800">{fallback}</span>;
+  return (
+    <span className="rounded-lg flex items-center justify-center shadow-sm p-1 text-white bg-gray-800">
+      {fallback}
+    </span>
+  );
 }

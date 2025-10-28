@@ -1,9 +1,17 @@
 import { Link, useParams } from "react-router";
 
 import BaseImage from "@/components/BaseImage";
-import ButtonWrapper from "@/components/ButtonWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useProductItemClient } from "@/hooks/api/useProductItemClient";
+import type { ProduitResponseDto } from "@/services/main";
+import { Button } from "@/components/ui/button";
+import DeleteProduct from "@/components/DeleteProduct";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
+import { ChevronsUpDown } from "lucide-react";
 
 export default function ProductDetails() {
   const { productId } = useParams<{ productId: string }>();
@@ -33,40 +41,48 @@ function ProductNotFound() {
   );
 }
 
-function ProductDetailsContent({ product }: { product: unknown }) {
-  console.log(product);
-  
+function ProductDetailsContent({ product }: { product: ProduitResponseDto }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <BaseImage source="" alt="" />
+    <div className="flex flex-col">
+      <BaseImage source={product.image} className="h-52" />
+      <div className="flex gap-2 items-center my-4">
+        <Button variant="default">Edit</Button>
+        <DeleteProduct productId={product.produitCode} />
       </div>
-
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">product()?.name</h1>
-        <div className="flex items-center gap-2 text-gray-600">
-          <svg
-            className="w-4 h-4 text-amber-500"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              fill="currentColor"
-              d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-            />
-          </svg>
-          <span>product()?.rating || 0</span>
+      <div className="flex gap-10">
+        <div className="flex flex-col gap-2">
+          <span>Nom</span>
+          <span className="font-bold text-sm">{product.nom}</span>
         </div>
-        <div className="text-cyan-700 text-xl font-bold">
-          product()?.price | number: '1.0-2' product()?.currency || 'USD'
+        <div className="flex flex-col gap-2">
+          <span>Prix</span>
+          <span className="font-bold text-sm">{product.prix}</span>
         </div>
-        <p className="text-gray-700 leading-relaxed">product()?.description</p>
-        <div className="flex items-center gap-2">
-          <ButtonWrapper variant="default">Ajouter au panier</ButtonWrapper>
-          <Link to="/" className="text-cyan-700 font-medium hover:underline">
-            Retour à la boutique
-          </Link>
+        <div className="flex flex-col gap-2">
+          <span>Categorie</span>
+          <span className="font-bold text-sm">{product.categorie}</span>
         </div>
+        <div className="flex flex-col gap-2">
+          <span>Stock</span>
+          <span className="font-bold text-sm">{product.stock}</span>
+        </div>
+        <div className="flex flex-col gap-2">
+          <span>Status</span>
+          <span className="font-bold text-sm">{product.state}</span>
+        </div>
+      </div>
+      <div className="mt-4">
+        <Collapsible>
+          <div className="flex gap-2 items-center justify-between font-bold p-1">
+            <span>Description</span>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost">
+                <ChevronsUpDown />
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent className="mt-2 p-4 rounded-lg border">{product.description}</CollapsibleContent>
+        </Collapsible>
       </div>
     </div>
   );

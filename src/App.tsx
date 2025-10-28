@@ -4,7 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import Pages from "@/pages";
 import { setToken } from "@/utils/interceptors";
-import { SessionProvider } from "@/context/useSession/SessionProvider";
+import { AuthProvider } from "@/context/useAuth/AuthProvider";
+import { CartProvider } from "@/context/useCart/CartProvider";
 
 const queryClient = new QueryClient();
 
@@ -13,12 +14,14 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SessionProvider>
-        <BrowserRouter>
-          <Pages />
-          <Toaster />
-        </BrowserRouter>
-      </SessionProvider>
+      <AuthProvider>
+        <CartProvider>
+          <BrowserRouter>
+            <Pages />
+            <Toaster />
+          </BrowserRouter>
+        </CartProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
