@@ -10,7 +10,7 @@ import { DeleteModalComponent } from '../../components/modal/delete-modal.compon
 import { Store } from '@ngrx/store';
 import { PanierActions } from '../../store/panier/panier.store';
 import { PanierService } from '../../api/api/panier.service';
-import { ApiResponsePanier } from '../../api/model/apiResponsePanier';
+import { ApiResponsePanier } from '../../api/model/ApiResponsePanier';
 
 @Component({
   selector: 'app-cart',

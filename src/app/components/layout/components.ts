@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { Store } from '@ngrx/store';
+import { Store, createSelector } from '@ngrx/store';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,6 +18,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { AuthActions, selectStatus, selectUser } from '../../store/auth/auth.store';
 import { ButtonWrapper } from '../../components/form/wrappers';
 import { ApiResponsePanier, PanierService, Product } from '../../api';
+import { selectPanierData } from '../../store/panier/panier.store';
 
 /**
  * AppHeader - Top navigation bar with brand, search placeholder, auth state, and cart link.
@@ -132,12 +133,11 @@ import { ApiResponsePanier, PanierService, Product } from '../../api';
             aria-label="Panier"
           >
             <mat-icon class="!text-base">shopping_cart</mat-icon>
-            <span
-              *ngIf="cartCount > 0"
-              class="absolute -top-1 -right-1 text-[10px] leading-none rounded-full bg-amber-500 text-white px-1.5 py-0.5"
+            <sup
+              *ngIf="cartCount$ | async as count"
+              class="absolute -top-2 -right-2 text-[11px] font-bold rounded-full bg-amber-500 text-white px-1.5 py-0.5 shadow"
+              >{{ count }}</sup
             >
-              {{ cartCount }}
-            </span>
           </a>
 
           <!-- Mobile burger -->
@@ -200,22 +200,17 @@ import { ApiResponsePanier, PanierService, Product } from '../../api';
 export class AppHeader {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
-  private readonly panierService = inject(PanierService);
 
   user$ = this.store.select(selectUser);
   status$ = this.store.select(selectStatus);
-  cartCount = 0;
+  cartCount$ = this.store.select(
+    createSelector(selectPanierData, (panier) => {
+      return panier?.produits?.reduce((acc, curr) => acc + 0, 0) || 0;
+    }),
+  );
   headerQuery = '';
   collapseOpen = signal<boolean>(false);
   userMenuOpen = signal<boolean>(false);
-  private guestCartPoll: any;
-
-  ngOnInit(): void {
-    this.loadCartCount();
-    try {
-      this.guestCartPoll = setInterval(() => this.updateGuestCartCount(), 3000);
-    } catch {}
-  }
 
   onHeaderQuery(e: Event): void {
     this.headerQuery = (e.target as HTMLInputElement)?.value ?? '';
@@ -242,49 +237,6 @@ export class AppHeader {
 
   getAvatar(user: any): string | null {
     return user?.image || user?.avatar || null;
-  }
-
-  private loadCartCount(): void {
-    const rawClient = localStorage.getItem('user');
-    const clientData = rawClient ? JSON.parse(rawClient) : null;
-    const clientCode = clientData ? clientData.id : null;
-
-    if (clientCode) {
-      this.panierService.panierByClientGet(clientCode).subscribe({
-        next: (response: ApiResponsePanier) => {
-          if (response.status === 'SUCCESS') {
-            const items = response.data.produits || [];
-            this.cartCount = items.reduce((sum, it) => sum, 0);
-          } else {
-            this.cartCount = 0;
-          }
-        },
-        error: () => {
-          this.updateGuestCartCount();
-        },
-      });
-    } else {
-      this.updateGuestCartCount();
-    }
-  }
-
-  private updateGuestCartCount(): void {
-    try {
-      const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('guestCart') : null;
-      const cart = raw ? JSON.parse(raw) : { items: [] };
-      const items = cart.items || [];
-      this.cartCount = items.reduce((sum: number, it: any) => sum + (it?.quantity ?? 0), 0);
-    } catch {
-      this.cartCount = 0;
-    }
-  }
-
-  ngOnDestroy(): void {
-    try {
-      if (this.guestCartPoll) {
-        clearInterval(this.guestCartPoll);
-      }
-    } catch {}
   }
 
   logout() {

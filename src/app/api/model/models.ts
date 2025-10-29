@@ -1,6 +1,6 @@
 export * from './addToCartRequest';
 export * from './apiResponseBoolean';
-export * from './apiResponsePanier';
+export * from './ApiResponsePanier';
 export * from './apiResponseProduit';
 export * from './apiResponseProduitList';
 export * from './apiResponseString';

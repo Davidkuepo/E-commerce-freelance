@@ -23,7 +23,7 @@ import { CustomHttpParameterCodec } from '../encoder';
 import { Observable } from 'rxjs';
 
 // @ts-ignore
-import { ApiResponsePanier } from '../model/apiResponsePanier';
+import { ApiResponsePanier } from '../model/ApiResponsePanier';
 // @ts-ignore
 import { PanierCreateRequest } from '../model/panierCreateRequest';
 
